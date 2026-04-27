@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ur-Roman">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Implementing REST API - Roman Urdu Lecture Notes</title>
+  <style>
+    :root {
+      --bg-1: #07111f;
+      --bg-2: #10253f;
+      --card: rgba(255, 255, 255, 0.10);
+      --card-strong: rgba(255, 255, 255, 0.16);
+      --text: #f6f8ff;
+      --muted: #c7d2fe;
+      --accent: #38bdf8;
+      --accent-2: #a78bfa;
+      --accent-3: #34d399;
+      --warning: #fbbf24;
+      --danger: #fb7185;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+      --radius: 26px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.35), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(167, 139, 250, 0.32), transparent 34%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      filter: blur(8px);
+      opacity: 0.22;
+      z-index: -1;
+      animation: floatBlob 12s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      top: 70px;
+      left: -140px;
+      background: var(--accent);
+    }
+
+    body::after {
+      bottom: -140px;
+      right: -90px;
+      background: var(--accent-2);
+      animation-delay: 1.5s;
+    }
+
+    @keyframes floatBlob {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(35px) scale(1.08); }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(56, 189, 248, 0); }
+      50% { box-shadow: 0 0 35px rgba(56, 189, 248, 0.32); }
+    }
+
+    @keyframes shine {
+      0% { left: -90%; }
+      100% { left: 130%; }
+    }
+
+    .page {
+      width: min(1180px, 92%);
+      margin: 0 auto;
+      padding: 38px 0 80px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 34px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.06));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      animation: fadeUp 0.9s ease both;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -90%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.24), transparent);
+      animation: shine 5.5s ease-in-out infinite;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(52, 211, 153, 0.16);
+      color: #bbf7d0;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 4.8rem);
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 1.14rem;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .meta-card,
+    .card,
+    .mini-card,
+    .code-card,
+    .table-wrap {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.22);
+      transition: transform 0.35s ease, border-color 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .meta-card:hover,
+    .card:hover,
+    .mini-card:hover,
+    .code-card:hover,
+    .table-wrap:hover {
+      transform: translateY(-7px);
+      border-color: rgba(56, 189, 248, 0.55);
+      background: var(--card-strong);
+      box-shadow: 0 26px 75px rgba(0, 0, 0, 0.34);
+    }
+
+    .meta-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .meta-card strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .section {
+      margin-top: 34px;
+      animation: fadeUp 0.9s ease both;
+    }
+
+    .section:nth-of-type(2) { animation-delay: 0.08s; }
+    .section:nth-of-type(3) { animation-delay: 0.16s; }
+    .section:nth-of-type(4) { animation-delay: 0.24s; }
+    .section:nth-of-type(5) { animation-delay: 0.32s; }
+
+    .card {
+      padding: 30px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.35rem);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h3 {
+      font-size: 1.45rem;
+      margin: 22px 0 12px;
+      color: #e0f2fe;
+    }
+
+    h4 {
+      font-size: 1.18rem;
+      margin: 18px 0 10px;
+      color: #d8b4fe;
+    }
+
+    p {
+      margin-bottom: 12px;
+    }
+
+    .lead {
+      color: #dbeafe;
+      font-size: 1.08rem;
+    }
+
+    ul,
+    ol {
+      padding-left: 24px;
+      margin: 10px 0 16px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .objectives {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      list-style: none;
+      padding: 0;
+    }
+
+    .objectives li,
+    .pill {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(56, 189, 248, 0.10);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+    }
+
+    .objectives li::before {
+      content: "✓ ";
+      color: var(--accent-3);
+      font-weight: 900;
+    }
+
+    .table-wrap {
+      border-radius: 22px;
+      overflow: hidden;
+      margin: 16px 0 22px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+    }
+
+    th,
+    td {
+      padding: 15px 17px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      vertical-align: top;
+    }
+
+    th {
+      background: rgba(56, 189, 248, 0.20);
+      color: #e0f2fe;
+      font-size: 0.96rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    tr {
+      transition: background 0.25s ease, transform 0.25s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: scale(1.01);
+    }
+
+    .code-card {
+      border-radius: 20px;
+      padding: 0;
+      overflow: hidden;
+      margin: 14px 0 24px;
+      background: rgba(2, 6, 23, 0.72);
+    }
+
+    .code-title {
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.9);
+      color: #93c5fd;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+      font-weight: 800;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 18px;
+      color: #d1fae5;
+      font-size: 0.96rem;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: Consolas, Monaco, "Courier New", monospace;
+    }
+
+    .highlight {
+      position: relative;
+      padding: 18px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      background: rgba(251, 191, 36, 0.12);
+      margin: 18px 0;
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    .activity {
+      padding: 18px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(167, 139, 250, 0.38);
+      background: rgba(167, 139, 250, 0.12);
+      margin: 18px 0;
+    }
+
+    .summary-box {
+      padding: 22px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(56, 189, 248, 0.12));
+      border: 1px solid rgba(52, 211, 153, 0.28);
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .mini-card {
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .tagline {
+      display: inline-block;
+      color: #bae6fd;
+      background: rgba(14, 165, 233, 0.16);
+      border: 1px solid rgba(14, 165, 233, 0.32);
+      border-radius: 999px;
+      padding: 7px 13px;
+      margin: 5px 5px 5px 0;
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .tagline:hover {
+      transform: translateY(-3px) scale(1.03);
+      background: rgba(14, 165, 233, 0.28);
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 30px;
+      padding: 24px;
+    }
+
+    @media (max-width: 850px) {
+      .hero {
+        padding: 30px;
+      }
+
+      .meta-grid,
+      .objectives,
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <span class="badge">📘 Lecture Notes</span>
+      <h1>Implementing REST API</h1>
+      <p class="subtitle">Topic: Implementing REST API Using Case Study — yeh complete lecture Roman Urdu mein recreate ki gayi hai, behtar design, hover effects, animations, tables aur code blocks ke saath.</p>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <strong>Topic</strong>
+          <span>Implementing REST API Using Case Study</span>
+        </div>
+        <div class="meta-card">
+          <strong>Duration</strong>
+          <span>2 Hours</span>
+        </div>
+        <div class="meta-card">
+          <strong>Lecture Type</strong>
+          <span>Theory + Step-by-Step Practical</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="section card">
+      <h2>📌 Learning Objectives</h2>
+      <p class="lead">Is lecture ke end tak students yeh kar sakenge:</p>
+      <ol class="objectives">
+        <li>Samajh sakenge ke REST API kya hoti hai.</li>
+        <li>REST principles explain kar sakenge.</li>
+        <li>API endpoints design kar sakenge.</li>
+        <li>REST API step-by-step implement kar sakenge.</li>
+        <li>Postman jaisay tools use karke API test kar sakenge.</li>
+        <li>Real-life case studies mein CRUD operations apply kar sakenge.</li>
+      </ol>
+    </section>
+
+    <section class="section card">
+      <h2>🕒 Lecture Plan (2 Hours)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0 – 20 min</td>
+              <td>REST & APIs ka introduction</td>
+            </tr>
+            <tr>
+              <td>20 – 40 min</td>
+              <td>REST Principles & HTTP Methods</td>
+            </tr>
+            <tr>
+              <td>40 – 60 min</td>
+              <td>Case Study Discussion + API Design</td>
+            </tr>
+            <tr>
+              <td>60 – 70 min</td>
+              <td>Student Activity 1</td>
+            </tr>
+            <tr>
+              <td>70 – 100 min</td>
+              <td>Step-by-Step Practical Implementation</td>
+            </tr>
+            <tr>
+              <td>100 – 110 min</td>
+              <td>Testing & Error Handling</td>
+            </tr>
+            <tr>
+              <td>110 – 120 min</td>
+              <td>Student Quiz + Wrap-up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>Part 1: API & REST ka Introduction (0 – 20 min)</h2>
+      <h3>API kya hoti hai?</h3>
+      <p>API ka matlab hai <strong>Application Programming Interface</strong>.</p>
+      <div class="highlight">
+        <h4>👉 Real-life Example:</h4>
+        <p>Restaurant waiter ke baare mein sochen:</p>
+        <ul>
+          <li>Aap (client) order dete hain.</li>
+          <li>Waiter (API) order kitchen (server) tak pohanchata hai.</li>
+          <li>Kitchen food prepare karta hai.</li>
+          <li>Waiter food wapas aap ke paas le aata hai.</li>
+        </ul>
+      </div>
+      <p>So:</p>
+      <div class="mini-grid">
+        <div class="mini-card"><strong>Client</strong><br />Frontend</div>
+        <div class="mini-card"><strong>Server</strong><br />Backend</div>
+        <div class="mini-card"><strong>API</strong><br />Communication bridge</div>
+      </div>
+
+      <h3>REST kya hai?</h3>
+      <p>REST ka matlab hai <strong>Representational State Transfer</strong>.</p>
+      <p>Yeh web services bananay ke liye aik architectural style hai.</p>
+      <p>Yeh HTTP protocol use karta hai.</p>
+    </section>
+
+    <section class="section card">
+      <h2>Part 2: REST Principles (20 – 40 min)</h2>
+      <p>REST 6 main principles par based hota hai:</p>
+      <div class="mini-grid">
+        <div class="mini-card">
+          <h3>1️⃣ Client-Server Architecture</h3>
+          <p>Frontend aur backend separate hotay hain.</p>
+        </div>
+        <div class="mini-card">
+          <h3>2️⃣ Stateless</h3>
+          <p>Har request mein tamam zaroori information honi chahiye.</p>
+          <p>Server client session store nahi karta.</p>
+          <p><strong>Example:</strong> Har dafa jab aap ATM par jatay hain, aap card dobara insert kartay hain.</p>
+        </div>
+        <div class="mini-card">
+          <h3>3️⃣ Cacheable</h3>
+          <p>Responses performance improve karne ke liye cache kiye ja sakte hain.</p>
+        </div>
+        <div class="mini-card">
+          <h3>4️⃣ Uniform Interface</h3>
+          <p>Standard URL aur HTTP methods use hotay hain.</p>
+        </div>
+        <div class="mini-card">
+          <h3>5️⃣ Layered System</h3>
+          <p>Security layer, database layer waghera ho sakti hain.</p>
+        </div>
+        <div class="mini-card">
+          <h3>6️⃣ Code on Demand (Optional)</h3>
+          <p>Yeh optional principle hai.</p>
+        </div>
+      </div>
+
+      <h3>HTTP Methods in REST</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Purpose</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GET</td>
+              <td>Data retrieve karna</td>
+              <td>Student list get karna</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td>Naya data create karna</td>
+              <td>Student add karna</td>
+            </tr>
+            <tr>
+              <td>PUT</td>
+              <td>Data update karna</td>
+              <td>Student update karna</td>
+            </tr>
+            <tr>
+              <td>DELETE</td>
+              <td>Data delete karna</td>
+              <td>Student remove karna</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="activity">
+        <h3>🧠 Mini Discussion Question (After 30–40 Minutes)</h3>
+        <p>Students se poochain:</p>
+        <ol>
+          <li>REST APIs stateless kyun hoti hain?</li>
+          <li>Agar server session store kare to kya problems occur hoti hain?</li>
+          <li>Kya hum data fetch karne ke liye GET ki jagah POST use kar sakte hain? Kyun/kyun nahi?</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>Part 3: Case Study – Student Management System (40 – 60 min)</h2>
+      <h3>🎯 Problem Statement</h3>
+      <p>Hum Student Management System ke liye REST API build karna chahtay hain.</p>
+      <p>Har student ke paas yeh fields hain:</p>
+      <div>
+        <span class="tagline">id</span>
+        <span class="tagline">name</span>
+        <span class="tagline">email</span>
+        <span class="tagline">department</span>
+      </div>
+
+      <h3>Step 1: Resources identify karna</h3>
+      <p>REST mein har cheez aik resource hoti hai.</p>
+      <p>Yahan resource = <strong>Student</strong></p>
+      <p>Base URL:</p>
+      <div class="code-card">
+        <div class="code-title">Base URL</div>
+        <pre><code>/api/students</code></pre>
+      </div>
+
+      <h3>Step 2: Endpoints design karna</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Method</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sab students get karna</td>
+              <td>GET</td>
+              <td>/api/students</td>
+            </tr>
+            <tr>
+              <td>Student by id get karna</td>
+              <td>GET</td>
+              <td>/api/students/{id}</td>
+            </tr>
+            <tr>
+              <td>Student add karna</td>
+              <td>POST</td>
+              <td>/api/students</td>
+            </tr>
+            <tr>
+              <td>Student update karna</td>
+              <td>PUT</td>
+              <td>/api/students/{id}</td>
+            </tr>
+            <tr>
+              <td>Student delete karna</td>
+              <td>DELETE</td>
+              <td>/api/students/{id}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="activity">
+        <h3>👨‍🎓 Student Activity 1 (60 – 70 min)</h3>
+        <p>Students ko groups mein divide karein.</p>
+        <p>👉 Task:</p>
+        <p>REST API design karein:</p>
+        <ul>
+          <li>Library Management System OR</li>
+          <li>Online Store</li>
+        </ul>
+        <p>Unhein yeh karna hoga:</p>
+        <ul>
+          <li>Resources identify karna</li>
+          <li>Endpoints define karna</li>
+          <li>HTTP methods choose karna</li>
+        </ul>
+        <p>10 minutes ke baad answers discuss karein.</p>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>Part 4: Step-by-Step Practical Implementation (70 – 100 min)</h2>
+      <p>Hum implement karenge using:</p>
+      <div>
+        <span class="tagline">Node.js</span>
+        <span class="tagline">Express.js</span>
+        <span class="tagline">Postman</span>
+      </div>
+      <p>(Aap isay PHP/Laravel, Python/Django waghera mein bhi adapt kar sakte hain.)</p>
+
+      <h3>Step 1: Project initialize karna</h3>
+      <div class="code-card">
+        <div class="code-title">Terminal Commands</div>
+        <pre><code>npm init -y
+npm install express</code></pre>
+      </div>
+      <p>File create karein:</p>
+      <div class="code-card">
+        <div class="code-title">File Name</div>
+        <pre><code>server.js</code></pre>
+      </div>
+
+      <h3>Step 2: Basic Server Setup</h3>
+      <div class="code-card">
+        <div class="code-title">server.js</div>
+        <pre><code>const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.listen(3000, () =&gt; {
+  console.log("Server running on port 3000");
+});</code></pre>
+      </div>
+
+      <h3>Step 3: Dummy Data create karna</h3>
+      <div class="code-card">
+        <div class="code-title">Dummy Students Data</div>
+        <pre><code>let students = [
+  { id: 1, name: "Ali", email: "ali@gmail.com", department: "CS" },
+  { id: 2, name: "Sara", email: "sara@gmail.com", department: "IT" }
+];</code></pre>
+      </div>
+
+      <h3>Step 4: CRUD Operations implement karna</h3>
+
+      <h4>GET All Students</h4>
+      <div class="code-card">
+        <div class="code-title">GET /api/students</div>
+        <pre><code>app.get('/api/students', (req, res) =&gt; {
+  res.json(students);
+});</code></pre>
+      </div>
+
+      <h4>GET Student By ID</h4>
+      <div class="code-card">
+        <div class="code-title">GET /api/students/:id</div>
+        <pre><code>app.get('/api/students/:id', (req, res) =&gt; {
+  const student = students.find(s =&gt; s.id == req.params.id);
+
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  res.json(student);
+});</code></pre>
+      </div>
+
+      <h4>POST Create Student</h4>
+      <div class="code-card">
+        <div class="code-title">POST /api/students</div>
+        <pre><code>app.post('/api/students', (req, res) =&gt; {
+  const newStudent = {
+    id: students.length + 1,
+    ...req.body
+  };
+
+  students.push(newStudent);
+  res.status(201).json(newStudent);
+});</code></pre>
+      </div>
+
+      <h4>PUT Update Student</h4>
+      <div class="code-card">
+        <div class="code-title">PUT /api/students/:id</div>
+        <pre><code>app.put('/api/students/:id', (req, res) =&gt; {
+  const student = students.find(s =&gt; s.id == req.params.id);
+
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  student.name = req.body.name;
+  student.email = req.body.email;
+  student.department = req.body.department;
+
+  res.json(student);
+});</code></pre>
+      </div>
+
+      <h4>DELETE Student</h4>
+      <div class="code-card">
+        <div class="code-title">DELETE /api/students/:id</div>
+        <pre><code>app.delete('/api/students/:id', (req, res) =&gt; {
+  students = students.filter(s =&gt; s.id != req.params.id);
+  res.json({ message: "Student deleted successfully" });
+});</code></pre>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>Part 5: Testing Using Postman (100 – 110 min)</h2>
+      <p><strong>Tool:</strong> Postman</p>
+      <h3>Steps:</h3>
+      <ol>
+        <li>Postman open karein</li>
+        <li>HTTP method select karein</li>
+        <li>URL enter karein</li>
+        <li>Request send karein</li>
+        <li>Response check karein</li>
+      </ol>
+
+      <h3>Common HTTP Status Codes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>200</td>
+              <td>OK</td>
+            </tr>
+            <tr>
+              <td>201</td>
+              <td>Created</td>
+            </tr>
+            <tr>
+              <td>400</td>
+              <td>Bad Request</td>
+            </tr>
+            <tr>
+              <td>404</td>
+              <td>Not Found</td>
+            </tr>
+            <tr>
+              <td>500</td>
+              <td>Server Error</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>🧠 Final Student Quiz (110 – 120 min)</h2>
+      <ol>
+        <li>REST ka matlab kya hai?</li>
+        <li>PUT aur POST mein difference kya hai?</li>
+        <li>APIs stateless kyun honi chahiye?</li>
+        <li>Teacher resource ke liye endpoints design karein.</li>
+        <li>Resource create honay par kaunsa status code use hota hai?</li>
+      </ol>
+    </section>
+
+    <section class="section card">
+      <h2>📝 Summary</h2>
+      <div class="summary-box">
+        <p>Aaj hum ne seekha:</p>
+        <ul>
+          <li>REST API kya hoti hai</li>
+          <li>REST principles</li>
+          <li>HTTP methods</li>
+          <li>Endpoints design kaise karte hain</li>
+          <li>CRUD implement kaise karte hain</li>
+          <li>API test kaise karte hain</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h2>💡 Homework</h2>
+      <ol>
+        <li>Is API ko MongoDB ke saath connect karein.</li>
+        <li>Validation add karein.</li>
+        <li>JWT use karke authentication implement karein.</li>
+        <li>Cloud par deploy karein (e.g., Render ya Railway).</li>
+      </ol>
+    </section>
+
+    <footer class="footer">
+      <p>Complete Roman Urdu HTML recreation — internal CSS, hover effects, animation, tables, code blocks aur improved design ke saath.</p>
+    </footer>
+  </main>
+</body>
+</html>

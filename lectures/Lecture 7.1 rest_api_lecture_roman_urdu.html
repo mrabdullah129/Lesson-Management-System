@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REST API Design — Lecture Notes | Roman Urdu</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT & RESET
+============================================================ */
+:root {
+  --bg: #07080f;
+  --bg2: #0d1020;
+  --bg3: #131629;
+  --surface: #161a2e;
+  --surface2: #1c2240;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0,229,255,0.12);
+  --cyan-glow: 0 0 40px rgba(0,229,255,0.2);
+
+  --orange: #ff6b35;
+  --orange-dim: rgba(255,107,53,0.12);
+  --orange-glow: 0 0 40px rgba(255,107,53,0.2);
+
+  --green: #39ff8a;
+  --green-dim: rgba(57,255,138,0.1);
+  --green-glow: 0 0 40px rgba(57,255,138,0.2);
+
+  --yellow: #ffe135;
+  --yellow-dim: rgba(255,225,53,0.1);
+  --yellow-glow: 0 0 40px rgba(255,225,53,0.18);
+
+  --pink: #ff4da6;
+  --pink-dim: rgba(255,77,166,0.1);
+  --pink-glow: 0 0 40px rgba(255,77,166,0.2);
+
+  --violet: #a78bfa;
+  --violet-dim: rgba(167,139,250,0.1);
+  --violet-glow: 0 0 40px rgba(167,139,250,0.2);
+
+  --text: #eef0fa;
+  --text2: #8b90b8;
+  --text3: #555b80;
+  --radius: 18px;
+  --radius-sm: 10px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   ANIMATED GRID BACKGROUND
+============================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(0,229,255,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(255,107,53,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.04) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+  animation: ambientPulse 14s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPulse {
+  0%   { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1;   transform: scale(1.04); }
+}
+
+/* ============================================================
+   HERO
+============================================================ */
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px 60px;
+  border-bottom: 1px solid var(--border2);
+  overflow: hidden;
+}
+
+.hero-glow-ring {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,229,255,0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  animation: ringPulse 6s ease-in-out infinite;
+}
+.hero-glow-ring:nth-child(2) {
+  width: 900px; height: 900px;
+  border-color: rgba(0,229,255,0.04);
+  animation-delay: 1.5s;
+}
+.hero-glow-ring:nth-child(3) {
+  width: 500px; height: 500px;
+  border-color: rgba(255,107,53,0.06);
+  animation-delay: 3s;
+}
+
+@keyframes ringPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  50%      { transform: translate(-50%,-50%) scale(1.06); opacity: 0.5; }
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0,229,255,0.25);
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 8px 22px;
+  border-radius: 50px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideDown 0.9s ease both;
+}
+
+.hero-tag::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: blink 1.4s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(44px, 8vw, 96px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -3px;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideDown 0.9s ease 0.15s both;
+}
+
+.hero-title .line1 {
+  display: block;
+  background: linear-gradient(135deg, #fff 0%, #a0b4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-title .line2 {
+  display: block;
+  background: linear-gradient(135deg, var(--cyan) 0%, #00aaff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 17px;
+  color: var(--text2);
+  font-weight: 300;
+  margin: 24px 0 44px;
+  max-width: 600px;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideDown 0.9s ease 0.3s both;
+}
+
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideDown 0.9s ease 0.45s both;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.pill:hover {
+  color: var(--text);
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+  transform: translateY(-3px);
+  box-shadow: var(--cyan-glow);
+}
+
+@keyframes fadeSlideDown {
+  from { opacity:0; transform: translateY(-24px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ============================================================
+   MAIN LAYOUT
+============================================================ */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 80px 24px 100px;
+}
+
+/* ============================================================
+   SECTION
+============================================================ */
+.section {
+  margin-bottom: 90px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Section Header */
+.sec-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 36px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sec-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.sec-icon.cyan   { background: var(--cyan-dim);   border: 1px solid rgba(0,229,255,0.2);   box-shadow: var(--cyan-glow); }
+.sec-icon.orange { background: var(--orange-dim); border: 1px solid rgba(255,107,53,0.2);  box-shadow: var(--orange-glow); }
+.sec-icon.green  { background: var(--green-dim);  border: 1px solid rgba(57,255,138,0.2);  box-shadow: var(--green-glow); }
+.sec-icon.yellow { background: var(--yellow-dim); border: 1px solid rgba(255,225,53,0.2);  box-shadow: var(--yellow-glow); }
+.sec-icon.pink   { background: var(--pink-dim);   border: 1px solid rgba(255,77,166,0.2);  box-shadow: var(--pink-glow); }
+.sec-icon.violet { background: var(--violet-dim); border: 1px solid rgba(167,139,250,0.2); box-shadow: var(--violet-glow); }
+
+.sec-meta { flex: 1; }
+
+.sec-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sec-label.cyan   { color: var(--cyan); }
+.sec-label.orange { color: var(--orange); }
+.sec-label.green  { color: var(--green); }
+.sec-label.yellow { color: var(--yellow); }
+.sec-label.pink   { color: var(--pink); }
+.sec-label.violet { color: var(--violet); }
+
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(22px, 3.5vw, 38px);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.sec-time {
+  margin-left: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--text3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 16px;
+  border-radius: 50px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   CARDS
+============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--card-line, var(--cyan)), transparent);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+.card:hover { border-color: var(--card-line, rgba(0,229,255,0.25)); transform: translateY(-4px); }
+.card:hover::after { opacity: 1; }
+.card:hover { box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
+
+.card.cyan   { --card-line: var(--cyan);   }
+.card.orange { --card-line: var(--orange); }
+.card.green  { --card-line: var(--green);  }
+.card.yellow { --card-line: var(--yellow); }
+.card.pink   { --card-line: var(--pink);   }
+.card.violet { --card-line: var(--violet); }
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ============================================================
+   PROSE
+============================================================ */
+p {
+  font-size: 15px;
+  color: var(--text2);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+p:last-child { margin-bottom: 0; }
+p strong { color: var(--text); font-weight: 600; }
+
+/* ============================================================
+   INFO BOX
+============================================================ */
+.info-box {
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin: 16px 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: transform 0.3s ease;
+}
+.info-box:hover { transform: translateX(6px); }
+
+.info-box.cyan   { background: var(--cyan-dim);   border-left: 3px solid var(--cyan); }
+.info-box.orange { background: var(--orange-dim); border-left: 3px solid var(--orange); }
+.info-box.green  { background: var(--green-dim);  border-left: 3px solid var(--green); }
+.info-box.yellow { background: var(--yellow-dim); border-left: 3px solid var(--yellow); }
+.info-box.pink   { background: var(--pink-dim);   border-left: 3px solid var(--pink); }
+.info-box.violet { background: var(--violet-dim); border-left: 3px solid var(--violet); }
+
+.info-box-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.info-box-body { flex: 1; }
+.info-box-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.info-box.cyan   .info-box-title { color: var(--cyan); }
+.info-box.orange .info-box-title { color: var(--orange); }
+.info-box.green  .info-box-title { color: var(--green); }
+.info-box.yellow .info-box-title { color: var(--yellow); }
+.info-box.pink   .info-box-title { color: var(--pink); }
+.info-box.violet .info-box-title { color: var(--violet); }
+.info-box-text { font-size: 14px; color: var(--text2); line-height: 1.75; }
+
+/* ============================================================
+   CODE BLOCKS
+============================================================ */
+.code-wrap {
+  margin: 18px 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.code-wrap:hover { border-color: rgba(0,229,255,0.25); box-shadow: var(--cyan-glow); }
+
+.code-bar {
+  background: var(--surface2);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dots { display: flex; gap: 5px; }
+.dot { width: 11px; height: 11px; border-radius: 50%; }
+.dot.r { background: #ff5f57; }
+.dot.y { background: #febc2e; }
+.dot.g { background: #28c840; }
+
+.code-label {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-left: auto;
+  letter-spacing: 1px;
+}
+
+pre {
+  background: #060810;
+  padding: 22px 26px;
+  overflow-x: auto;
+  margin: 0;
+  line-height: 1.8;
+}
+
+code {
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  color: #c9d1d9;
+}
+
+.kw  { color: #ff79c6; }
+.fn  { color: #8be9fd; }
+.str { color: #f1fa8c; }
+.num { color: #bd93f9; }
+.cm  { color: #6272a4; font-style: italic; }
+.ty  { color: #50fa7b; }
+.cn  { color: #ffb86c; }
+.op  { color: #ff5555; }
+.prop{ color: #8be9fd; }
+
+/* ============================================================
+   TABLES
+============================================================ */
+.tbl-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin: 18px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  padding: 14px 20px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text2);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+}
+
+tbody td {
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--text2);
+  border-top: 1px solid var(--border);
+  transition: all 0.25s ease;
+}
+
+tbody tr { background: var(--surface); transition: background 0.25s; }
+tbody tr:hover { background: var(--surface2); }
+tbody tr:hover td { color: var(--text); }
+
+.badge {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 50px;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.get    { background: rgba(57,255,138,0.12); color: var(--green);  border: 1px solid rgba(57,255,138,0.25); }
+.badge.post   { background: rgba(0,229,255,0.12);  color: var(--cyan);   border: 1px solid rgba(0,229,255,0.25); }
+.badge.put    { background: rgba(255,225,53,0.12); color: var(--yellow); border: 1px solid rgba(255,225,53,0.25); }
+.badge.delete { background: rgba(255,77,166,0.12); color: var(--pink);   border: 1px solid rgba(255,77,166,0.25); }
+.badge.cyan   { background: var(--cyan-dim);   color: var(--cyan);   border: 1px solid rgba(0,229,255,0.25); }
+.badge.orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,107,53,0.25); }
+.badge.green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(57,255,138,0.25); }
+.badge.yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(255,225,53,0.25); }
+.badge.pink   { background: var(--pink-dim);   color: var(--pink);   border: 1px solid rgba(255,77,166,0.25); }
+.badge.violet { background: var(--violet-dim); color: var(--violet); border: 1px solid rgba(167,139,250,0.25); }
+.badge.red    { background: rgba(255,50,50,0.12); color: #ff6b6b; border: 1px solid rgba(255,50,50,0.25); }
+.badge.gray   { background: rgba(148,163,184,0.1); color: var(--text2); border: 1px solid var(--border); }
+
+/* inline code */
+.ic {
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  padding: 1px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,229,255,0.18);
+}
+
+/* ============================================================
+   CONCEPT GRID
+============================================================ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 14px 0; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin: 14px 0; }
+
+@media(max-width:640px) {
+  .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+}
+
+.concept-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.35s ease;
+  cursor: default;
+}
+.concept-card:hover { transform: translateY(-6px); }
+.concept-card.cyan:hover   { border-color: var(--cyan);   box-shadow: var(--cyan-glow); }
+.concept-card.orange:hover { border-color: var(--orange); box-shadow: var(--orange-glow); }
+.concept-card.green:hover  { border-color: var(--green);  box-shadow: var(--green-glow); }
+.concept-card.yellow:hover { border-color: var(--yellow); box-shadow: var(--yellow-glow); }
+.concept-card.pink:hover   { border-color: var(--pink);   box-shadow: var(--pink-glow); }
+.concept-card.violet:hover { border-color: var(--violet); box-shadow: var(--violet-glow); }
+
+.concept-card .emo { font-size: 34px; margin-bottom: 10px; display: block; }
+.concept-card .lbl { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.concept-card .dsc { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+/* ============================================================
+   LIST ITEMS
+============================================================ */
+.fancy-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0;
+}
+.fancy-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text2);
+  padding: 14px 18px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  line-height: 1.6;
+}
+.fancy-list li:hover {
+  border-color: rgba(0,229,255,0.25);
+  color: var(--text);
+  transform: translateX(8px);
+  background: var(--surface2);
+}
+.fancy-list li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  flex-shrink: 0;
+  margin-top: 7px;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* ============================================================
+   ACTIVITY CARD
+============================================================ */
+.activity {
+  background: linear-gradient(135deg, rgba(255,225,53,0.07), rgba(255,107,53,0.05));
+  border: 1px solid rgba(255,225,53,0.2);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin: 28px 0;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s ease;
+}
+.activity::before {
+  content: '🎯';
+  position: absolute;
+  right: 28px; top: 22px;
+  font-size: 44px;
+  opacity: 0.15;
+  transition: all 0.3s;
+}
+.activity:hover { border-color: rgba(255,225,53,0.45); box-shadow: var(--yellow-glow); transform: translateY(-2px); }
+.activity:hover::before { opacity: 0.4; transform: scale(1.2) rotate(8deg); }
+
+.activity-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--yellow);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.discussion {
+  background: var(--violet-dim);
+  border: 1px solid rgba(167,139,250,0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 14px;
+  transition: all 0.3s;
+}
+.discussion:hover { border-color: rgba(167,139,250,0.45); transform: translateX(4px); }
+.discussion-title { font-size: 14px; font-weight: 700; color: var(--violet); margin-bottom: 8px; }
+.discussion p { margin: 0; font-size: 14px; color: var(--text2); }
+
+/* ============================================================
+   GOOD/BAD COMPARISON
+============================================================ */
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+@media(max-width:500px){ .compare-row { grid-template-columns: 1fr; } }
+
+.compare-bad, .compare-good {
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-family: 'Fira Code', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.3s;
+}
+.compare-bad:hover, .compare-good:hover { transform: scale(1.02); }
+
+.compare-bad  { background: rgba(255,50,50,0.08);   color: #ff6b6b; border: 1px solid rgba(255,50,50,0.2); }
+.compare-good { background: rgba(57,255,138,0.08);  color: var(--green); border: 1px solid rgba(57,255,138,0.2); }
+
+/* ============================================================
+   STATUS CODE TABLE
+============================================================ */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+.status-card:hover { transform: translateY(-4px); }
+.status-card.s200:hover { border-color: var(--green);  box-shadow: var(--green-glow); }
+.status-card.s201:hover { border-color: var(--cyan);   box-shadow: var(--cyan-glow); }
+.status-card.s400:hover { border-color: var(--yellow); box-shadow: var(--yellow-glow); }
+.status-card.s404:hover { border-color: var(--orange); box-shadow: var(--orange-glow); }
+.status-card.s500:hover { border-color: var(--pink);   box-shadow: var(--pink-glow); }
+
+.status-code {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.s200 .status-code { color: var(--green); }
+.s201 .status-code { color: var(--cyan); }
+.s400 .status-code { color: var(--yellow); }
+.s404 .status-code { color: var(--orange); }
+.s500 .status-code { color: var(--pink); }
+
+.status-label { font-size: 13px; color: var(--text2); font-weight: 500; }
+
+/* ============================================================
+   FLOW STEPS (LOGIN / JWT)
+============================================================ */
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+  position: relative;
+}
+.flow::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 20px;
+  bottom: 20px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--cyan), transparent);
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text2);
+  transition: all 0.3s ease;
+  position: relative;
+}
+.flow-step:hover {
+  border-color: rgba(0,229,255,0.3);
+  color: var(--text);
+  transform: translateX(8px);
+  background: var(--surface2);
+}
+
+.flow-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0,229,255,0.3);
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   DIVIDER
+============================================================ */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  margin: 60px 0;
+}
+
+/* ============================================================
+   ENDPOINT PATH DISPLAY
+============================================================ */
+.endpoint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.3s;
+}
+.endpoint-pill:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: var(--cyan-glow);
+}
+
+/* ============================================================
+   QUIZ SECTION
+============================================================ */
+.quiz-q {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 16px;
+  transition: all 0.3s;
+}
+.quiz-q:hover { border-color: rgba(167,139,250,0.3); box-shadow: var(--violet-glow); }
+
+.quiz-q-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.q-num {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--violet), #818cf8);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800;
+  flex-shrink: 0;
+  font-family: 'Syne', sans-serif;
+}
+
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+
+.quiz-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.25s;
+  cursor: default;
+}
+.quiz-opt:hover { background: var(--cyan-dim); border-color: rgba(0,229,255,0.25); color: var(--text); transform: translateX(4px); }
+.quiz-opt.correct { background: var(--green-dim); border-color: rgba(57,255,138,0.35); color: var(--green); }
+
+.opt-ltr {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px; font-weight: 600;
+  flex-shrink: 0;
+}
+.quiz-opt.correct .opt-ltr { background: rgba(57,255,138,0.2); color: var(--green); }
+
+/* ============================================================
+   SHORT QUESTIONS
+============================================================ */
+.short-q {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+.short-q:hover { border-color: rgba(255,225,53,0.3); transform: translateX(6px); background: var(--surface2); }
+.short-q-n { font-family:'Fira Code',monospace; font-size:12px; color:var(--yellow); background:var(--yellow-dim); border:1px solid rgba(255,225,53,0.2); border-radius:7px; padding:3px 9px; flex-shrink:0; }
+.short-q-t { font-size:15px; color:var(--text2); padding-top:2px; }
+
+/* ============================================================
+   SUMMARY CHECKLIST
+============================================================ */
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text2);
+  padding: 13px 18px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+}
+.check-item:hover { border-color: rgba(57,255,138,0.3); color: var(--text); transform: translateX(8px); background: var(--surface2); }
+.check-icon { font-size: 18px; flex-shrink:0; }
+
+/* ============================================================
+   ASSIGNMENT CARD
+============================================================ */
+.assignment {
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: var(--radius);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s;
+}
+.assignment::after { content:'🛒'; position:absolute; right:28px; bottom:20px; font-size:64px; opacity:0.07; }
+.assignment:hover { border-color: rgba(0,229,255,0.45); box-shadow: var(--cyan-glow); }
+
+.resource-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 50px;
+  padding: 4px 14px;
+  margin: 4px 4px 4px 0;
+  transition: all 0.3s;
+  cursor: default;
+}
+.resource-tag:hover { transform: translateY(-2px); box-shadow: var(--cyan-glow); }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 60px 24px;
+  border-top: 1px solid var(--border);
+}
+footer .f-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--cyan), #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+footer p { font-size: 13px; color: var(--text3); margin-bottom: 6px; }
+
+/* ============================================================
+   JSON EXAMPLE
+============================================================ */
+.json-box {
+  background: #060810;
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin: 16px 0;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-x: auto;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.json-box:hover { border-color: rgba(57,255,138,0.3); box-shadow: var(--green-glow); }
+.j-key   { color: #8be9fd; }
+.j-str   { color: #f1fa8c; }
+.j-num   { color: #bd93f9; }
+.j-punc  { color: #6272a4; }
+
+/* ============================================================
+   PROGRESS STEPS
+============================================================ */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 18px 0;
+}
+.step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.step:not(:last-child)::before {
+  content:'';
+  position: absolute;
+  left: 17px;
+  top: 40px;
+  bottom: -4px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--cyan) 0%, transparent 100%);
+}
+.step-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  border: 2px solid rgba(0,229,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cyan);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-shadow: var(--cyan-glow);
+}
+.step-body {
+  flex: 1;
+  padding-bottom: 24px;
+}
+.step-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+/* handled by JS below */
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media(max-width:768px){
+  .sec-header { flex-wrap: wrap; }
+  .sec-time { order: -1; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========================================================
+     HERO
+======================================================== -->
+<header class="hero">
+  <div class="hero-glow-ring"></div>
+  <div class="hero-glow-ring"></div>
+  <div class="hero-glow-ring"></div>
+
+  <div class="hero-tag">📡 Lecture Notes — Roman Urdu</div>
+
+  <h1 class="hero-title">
+    <span class="line1">REST API</span>
+    <span class="line2">Designing</span>
+  </h1>
+
+  <p class="hero-sub">
+    Topic: Case Study ke zariye REST API Design karna<br>
+    Computers Science ke students ke liye — Theory + Practical dono shamil
+  </p>
+
+  <div class="hero-pills">
+    <div class="pill">⏱️ 2 Ghante ki Class</div>
+    <div class="pill">📐 Theory + Practical</div>
+    <div class="pill">🟢 Node.js + Express.js</div>
+    <div class="pill">🔬 Postman se Testing</div>
+    <div class="pill">📚 Computer Science Level</div>
+  </div>
+</header>
+
+<!-- ========================================================
+     MAIN CONTENT
+======================================================== -->
+<main>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 1 — REST API ka Taaaruf
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon cyan">📡</div>
+      <div class="sec-meta">
+        <div class="sec-label cyan">🔷 Part 1</div>
+        <h2 class="sec-title">REST API ka Taaruf (Introduction to REST API)</h2>
+      </div>
+      <span class="sec-time">0 – 20 Minute</span>
+    </div>
+
+    <!-- API kya hai -->
+    <div class="card cyan">
+      <div class="card-title">📌 API kya hoti hai? (What is an API?)</div>
+      <p>
+        <strong>API (Application Programming Interface)</strong> aik aisa set of rules (qawaaed ka majmua) hai jo mukhtalif software systems ko ek doosre se <strong>baat karne ki ijazat deta hai</strong>.
+      </p>
+
+      <div class="info-box cyan">
+        <span class="info-box-icon">👉</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Asl Zindagi ki Misal (Real-life Example):</div>
+          <div class="info-box-text">
+            Jab aap <strong>Foodpanda</strong> ya <strong>Careem</strong> istemaal karte hain, to mobile app server ke saath APIs ki madad se baat karta hai.<br><br>
+            App ek request bhejta hai:<br>
+            <em>"Dastiyaab restaurants dikhao" (Show available restaurants)</em><br><br>
+            Server <strong>JSON format</strong> mein restaurant ka data bheji se jawaab deta hai.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REST kya hai -->
+    <div class="card cyan">
+      <div class="card-title">📌 REST kya hai? (What is REST?)</div>
+      <p>
+        <strong>REST (Representational State Transfer)</strong> networked applications design karne ka ek <strong>architectural style (mamaari ka andaz)</strong> hai.
+      </p>
+      <p>Yeh in cheezon ka istemaal karta hai:</p>
+      <ul class="fancy-list">
+        <li><strong>HTTP protocol</strong> — data transfer ka tareeqa</li>
+        <li><strong>Standard HTTP methods</strong> — GET, POST, PUT, DELETE wagherah</li>
+        <li><strong>Stateless communication</strong> — har request apni alag pehchaan rakhti hai</li>
+      </ul>
+    </div>
+
+    <!-- REST Principles -->
+    <div class="card cyan">
+      <div class="card-title">📋 REST ke Usool (REST Principles)</div>
+      <div class="grid-2">
+        <div class="concept-card cyan">
+          <span class="emo">🔄</span>
+          <div class="lbl">1. Stateless</div>
+          <div class="dsc">Har request mukammal hoti hai — server ko pehli request yaad nahi rehti</div>
+        </div>
+        <div class="concept-card orange">
+          <span class="emo">🖥️</span>
+          <div class="lbl">2. Client-Server Architecture</div>
+          <div class="dsc">Client aur Server alag alag kaam karte hain — dono ki zimmedaari alag hai</div>
+        </div>
+        <div class="concept-card green">
+          <span class="emo">🔗</span>
+          <div class="lbl">3. Uniform Interface</div>
+          <div class="dsc">Ek hi andaz mein communicate karna — sab ke liye ek jaisa tareeqa</div>
+        </div>
+        <div class="concept-card yellow">
+          <span class="emo">📦</span>
+          <div class="lbl">4. Resource-based</div>
+          <div class="dsc">Sab kuch "resource" hai — jaise users, books, orders wagherah</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HTTP Methods -->
+    <div class="card cyan">
+      <div class="card-title">⚡ REST mein istemaal hone waale HTTP Methods</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Maqsad (Purpose)</th>
+              <th>Asl Zindagi ki Misal (Real-life Example)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td>Data haasil karna (Retrieve data)</td>
+              <td>Product dekhna (View product)</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td>Naya data banana (Create data)</td>
+              <td>User register karna (Register user)</td>
+            </tr>
+            <tr>
+              <td><span class="badge put">PUT</span></td>
+              <td>Data update karna (Update data)</td>
+              <td>Profile update karna (Update profile)</td>
+            </tr>
+            <tr>
+              <td><span class="badge delete">DELETE</span></td>
+              <td>Data mitaana (Delete data)</td>
+              <td>Account delete karna (Delete account)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Student Activity 1 -->
+    <div class="activity">
+      <div class="activity-title">🎯 Student Activity 1 (20 Minute ke Baad)</div>
+      <p style="color:var(--text2); margin-bottom:14px;">Think-Pair-Share Activity (Sochna — Partner se baat karna — Share karna)</p>
+
+      <div class="info-box yellow">
+        <span class="info-box-icon">❓</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Students se poochho:</div>
+          <div class="info-box-text">
+            Jab aap Facebook par <strong>login</strong> karte hain to kya hota hai?<br>
+            Kaun sa HTTP method istemaal hota hai?<br>
+            Login GET hai ya POST? Kyun?
+          </div>
+        </div>
+      </div>
+
+      <div class="discussion">
+        <div class="discussion-title">💬 Mutawaqqa Jawaab (Expected Answer):</div>
+        <p><strong>POST</strong> — kyunke credentials (username/password) request body mein securely bheje jaate hain. GET mein yeh URL mein nazar aate hain jo mehfooz nahi hota.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 2 — Case Study
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon orange">📚</div>
+      <div class="sec-meta">
+        <div class="sec-label orange">🔶 Part 2</div>
+        <h2 class="sec-title">Case Study ka Taaruf (Case Study Introduction)</h2>
+      </div>
+      <span class="sec-time">20 – 40 Minute</span>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">📚 Case Study: Online Bookstore REST API</div>
+      <p>Hum ek <strong>Online Bookstore System</strong> ke liye REST API design karenge.</p>
+
+      <div class="info-box orange">
+        <span class="info-box-icon">🏪</span>
+        <div class="info-box-body">
+          <div class="info-box-title">System Requirements (Nizam ki Zarooriyaat):</div>
+          <div class="info-box-text">
+            Is system ko yeh kaam karne chahiyein:
+          </div>
+        </div>
+      </div>
+
+      <ul class="fancy-list">
+        <li><strong>1.</strong> User registration aur login (User ka istrakhaal aur daakhil hona)</li>
+        <li><strong>2.</strong> Nai kitaab add karna (Add new books)</li>
+        <li><strong>3.</strong> Tamam kitaaben dekhna (View all books)</li>
+        <li><strong>4.</strong> Kitaab ki tafsilaat update karna (Update book details)</li>
+        <li><strong>5.</strong> Kitaab mitaana (Delete book)</li>
+        <li><strong>6.</strong> Order dena (Place orders)</li>
+      </ul>
+    </div>
+
+    <!-- Step 1: Resources -->
+    <div class="card orange">
+      <div class="card-title">📌 Step 1: Resources ki Pehchaan (Identify Resources)</div>
+      <p>REST mein har cheez ek <strong>Resource (Wasila)</strong> hoti hai.</p>
+      <div class="info-box orange">
+        <span class="info-box-icon">🌐</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Online Bookstore ke Resources:</div>
+          <div class="info-box-text">
+            Hamare system mein teen bunyaadi resources hain:
+          </div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="concept-card cyan">
+          <span class="emo">👤</span>
+          <div class="lbl">Users</div>
+          <div class="dsc">System ke woh log jo register aur login karte hain</div>
+        </div>
+        <div class="concept-card orange">
+          <span class="emo">📖</span>
+          <div class="lbl">Books</div>
+          <div class="dsc">Bookstore mein maujood kitaabein</div>
+        </div>
+        <div class="concept-card green">
+          <span class="emo">🛒</span>
+          <div class="lbl">Orders</div>
+          <div class="dsc">Users ke kitabon ke orders</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Endpoints -->
+    <div class="card orange">
+      <div class="card-title">📌 Step 2: Endpoints Define Karo (Define Endpoints)</div>
+
+      <!-- Users Endpoints -->
+      <p style="font-size:16px; font-weight:700; color:var(--cyan); margin-bottom:12px;">👤 Users ke Endpoints:</p>
+      <div class="tbl-wrap" style="margin-bottom:24px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation (Amal)</th>
+              <th>Method</th>
+              <th>Endpoint (Raah)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>User Register karna</td>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="endpoint-pill">/users</span></td>
+            </tr>
+            <tr>
+              <td>Tamam Users dekhna</td>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="endpoint-pill">/users</span></td>
+            </tr>
+            <tr>
+              <td>Aik User dekhna</td>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="endpoint-pill">/users/{id}</span></td>
+            </tr>
+            <tr>
+              <td>User Update karna</td>
+              <td><span class="badge put">PUT</span></td>
+              <td><span class="endpoint-pill">/users/{id}</span></td>
+            </tr>
+            <tr>
+              <td>User Mitaana</td>
+              <td><span class="badge delete">DELETE</span></td>
+              <td><span class="endpoint-pill">/users/{id}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Books Endpoints -->
+      <p style="font-size:16px; font-weight:700; color:var(--orange); margin-bottom:12px;">📖 Books ke Endpoints:</p>
+      <div class="tbl-wrap" style="margin-bottom:24px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation (Amal)</th>
+              <th>Method</th>
+              <th>Endpoint (Raah)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kitaab Add karna</td>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="endpoint-pill">/books</span></td>
+            </tr>
+            <tr>
+              <td>Tamam Kitaabein dekhna</td>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="endpoint-pill">/books</span></td>
+            </tr>
+            <tr>
+              <td>Aik Kitaab dekhna</td>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="endpoint-pill">/books/{id}</span></td>
+            </tr>
+            <tr>
+              <td>Kitaab Update karna</td>
+              <td><span class="badge put">PUT</span></td>
+              <td><span class="endpoint-pill">/books/{id}</span></td>
+            </tr>
+            <tr>
+              <td>Kitaab Mitaana</td>
+              <td><span class="badge delete">DELETE</span></td>
+              <td><span class="endpoint-pill">/books/{id}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Orders Endpoints -->
+      <p style="font-size:16px; font-weight:700; color:var(--green); margin-bottom:12px;">🛒 Orders ke Endpoints:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation (Amal)</th>
+              <th>Method</th>
+              <th>Endpoint (Raah)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Order Banana</td>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="endpoint-pill">/orders</span></td>
+            </tr>
+            <tr>
+              <td>Orders Dekhna</td>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="endpoint-pill">/orders</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Student Activity 2 -->
+    <div class="activity">
+      <div class="activity-title">🎯 Student Activity 2 (40 Minute par)</div>
+      <p style="color:var(--text2); margin-bottom:14px;">Quick Quiz — 5 Minute</p>
+
+      <div class="quiz-q" style="background:rgba(255,255,255,0.02); border-color:rgba(255,225,53,0.15); margin-bottom:10px;">
+        <div class="quiz-q-text"><span class="q-num" style="background:linear-gradient(135deg,var(--yellow),var(--orange))">1</span> Id = 10 waali kitaab update karne ka endpoint kya hoga?</div>
+        <div class="info-box yellow" style="margin:0;"><span class="info-box-icon">✅</span><div class="info-box-body"><div class="info-box-text"><span class="badge put">PUT</span> &nbsp;<span class="endpoint-pill">/books/10</span></div></div></div>
+      </div>
+
+      <div class="quiz-q" style="background:rgba(255,255,255,0.02); border-color:rgba(255,225,53,0.15); margin-bottom:10px;">
+        <div class="quiz-q-text"><span class="q-num" style="background:linear-gradient(135deg,var(--yellow),var(--orange))">2</span> User delete karne ke liye kaun sa HTTP method istemaal hota hai?</div>
+        <div class="info-box yellow" style="margin:0;"><span class="info-box-icon">✅</span><div class="info-box-body"><div class="info-box-text"><span class="badge delete">DELETE</span> — kyunke hum data mitaana chahte hain</div></div></div>
+      </div>
+
+      <div class="quiz-q" style="background:rgba(255,255,255,0.02); border-color:rgba(255,225,53,0.15);">
+        <div class="quiz-q-text"><span class="q-num" style="background:linear-gradient(135deg,var(--yellow),var(--orange))">3</span> Kya <span class="ic">/getAllBooks</span> ek acha REST endpoint hai? Kyun?</div>
+        <div class="info-box orange" style="margin:0;">
+          <span class="info-box-icon">❌</span>
+          <div class="info-box-body">
+            <div class="info-box-title">Nahi — yeh REST ka tareeqa nahi</div>
+            <div class="info-box-text">REST mein <strong>nouns (ism)</strong> istemaal hote hain, verbs (fail) nahi.<br>Sahi endpoint: <span class="endpoint-pill">/books</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="discussion">
+        <div class="discussion-title">💬 Guftugu (Discussion):</div>
+        <p>REST mein <strong>nouns</strong> (ism) istemaal hote hain — <strong>verbs</strong> (fail) nahi. Sahi: <span class="ic">/books</span> ❌ Galat: <span class="ic">/getBooks</span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 3 — Best Practices
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon green">✅</div>
+      <div class="sec-meta">
+        <div class="sec-label green">🔷 Part 3</div>
+        <h2 class="sec-title">REST API Design ke Behtareen Tareeqe (Best Practices)</h2>
+      </div>
+      <span class="sec-time">40 – 60 Minute</span>
+    </div>
+
+    <!-- Practice 1 -->
+    <div class="card green">
+      <div class="card-title">✅ 1. Nouns istemaal karo, Verbs nahi (Use Nouns, Not Verbs)</div>
+      <p>Endpoints mein hamesha <strong>resource ka naam (noun)</strong> likho — action (verb) nahi.</p>
+      <div class="compare-row">
+        <div class="compare-bad"><span>❌</span> /getBooks</div>
+        <div class="compare-good"><span>✅</span> /books</div>
+      </div>
+    </div>
+
+    <!-- Practice 2 -->
+    <div class="card green">
+      <div class="card-title">✅ 2. Plural Resource Names istemaal karo (Use Plural Resource Names)</div>
+      <p>Resources ke naamon ko hamesha <strong>plural (jamaa)</strong> mein likho — singular (wahid) mein nahi.</p>
+      <div class="compare-row">
+        <div class="compare-bad"><span>❌</span> /book</div>
+        <div class="compare-good"><span>✅</span> /books</div>
+      </div>
+    </div>
+
+    <!-- Practice 3: Status Codes -->
+    <div class="card green">
+      <div class="card-title">✅ 3. Sahi HTTP Status Codes istemaal karo (Use Proper HTTP Status Codes)</div>
+      <p>Server se milne waala response ek <strong>status code</strong> ke saath aata hai jo batata hai ke kya hua.</p>
+
+      <div class="status-grid">
+        <div class="status-card s200">
+          <div class="status-code">200</div>
+          <div class="status-label">OK<br><span style="color:var(--text3);font-size:12px;">(Theek hai)</span></div>
+        </div>
+        <div class="status-card s201">
+          <div class="status-code">201</div>
+          <div class="status-label">Created<br><span style="color:var(--text3);font-size:12px;">(Bana diya)</span></div>
+        </div>
+        <div class="status-card s400">
+          <div class="status-code">400</div>
+          <div class="status-label">Bad Request<br><span style="color:var(--text3);font-size:12px;">(Galat Request)</span></div>
+        </div>
+        <div class="status-card s404">
+          <div class="status-code">404</div>
+          <div class="status-label">Not Found<br><span style="color:var(--text3);font-size:12px;">(Nahi Mila)</span></div>
+        </div>
+        <div class="status-card s500">
+          <div class="status-code">500</div>
+          <div class="status-label">Server Error<br><span style="color:var(--text3);font-size:12px;">(Server ki Ghalti)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice 4: JSON -->
+    <div class="card green">
+      <div class="card-title">✅ 4. JSON Format istemaal karo (Use JSON Format)</div>
+      <p>REST APIs mein data <strong>JSON (JavaScript Object Notation)</strong> format mein bheji aur receive kiya jaata hai.</p>
+      <p><strong>Misal Response (Example Response):</strong></p>
+      <div class="json-box">
+        <span class="j-punc">{</span><br>
+        &nbsp;&nbsp;<span class="j-key">"id"</span><span class="j-punc">:</span> <span class="j-num">1</span><span class="j-punc">,</span><br>
+        &nbsp;&nbsp;<span class="j-key">"title"</span><span class="j-punc">:</span> <span class="j-str">"Clean Code"</span><span class="j-punc">,</span><br>
+        &nbsp;&nbsp;<span class="j-key">"author"</span><span class="j-punc">:</span> <span class="j-str">"Robert C. Martin"</span><span class="j-punc">,</span><br>
+        &nbsp;&nbsp;<span class="j-key">"price"</span><span class="j-punc">:</span> <span class="j-num">500</span><br>
+        <span class="j-punc">}</span>
+      </div>
+    </div>
+
+    <!-- Student Activity 3 -->
+    <div class="activity">
+      <div class="activity-title">🎯 Student Activity 3 (60 Minute ke Baad — 10 Minute Break Discussion)</div>
+      <p style="color:var(--text2); margin-bottom:14px;">Group Activity (Groupi Kaam)</p>
+
+      <div class="info-box green">
+        <span class="info-box-icon">🎓</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Kaam (Task):</div>
+          <div class="info-box-text">
+            <strong>University Management System</strong> ke liye REST endpoints design karo.<br><br>
+            <strong>Resources:</strong><br>
+            ➤ Students (Taalib-ul-ilm)<br>
+            ➤ Courses (Science)<br>
+            ➤ Teachers (Asaatidha)<br><br>
+            Har group apne endpoints sabko sunaaega (present karega).
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 4 — Practical Implementation
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon yellow">💻</div>
+      <div class="sec-meta">
+        <div class="sec-label yellow">🔷 Part 4 — Amali (Practical)</div>
+        <h2 class="sec-title">Amali Nifaaz (Practical Implementation — Step-by-Step)</h2>
+      </div>
+      <span class="sec-time">60 – 100 Minute</span>
+    </div>
+
+    <div class="card yellow">
+      <div class="card-title">🛠️ Hum in tools istemaal karenge:</div>
+      <div class="grid-3">
+        <div class="concept-card green">
+          <span class="emo">🟢</span>
+          <div class="lbl">Node.js</div>
+          <div class="dsc">Server-side JavaScript runtime environment</div>
+        </div>
+        <div class="concept-card cyan">
+          <span class="emo">⚡</span>
+          <div class="lbl">Express.js</div>
+          <div class="dsc">Node.js ka web application framework</div>
+        </div>
+        <div class="concept-card orange">
+          <span class="emo">🔬</span>
+          <div class="lbl">Postman</div>
+          <div class="dsc">API testing ka mashoor tool</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">Step 1: Project Shuru Karo (Initialize Project)</div>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">Terminal / Command Prompt</span>
+            </div>
+            <pre><code><span class="fn">npm</span> init -y</code></pre>
+          </div>
+          <p>Phir dependencies install karo:</p>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">Terminal</span>
+            </div>
+            <pre><code><span class="fn">npm</span> install express body-parser</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">Step 2: Server Banao (Create Server)</div>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript — server.js</span>
+            </div>
+            <pre><code><span class="kw">const</span> <span class="cn">express</span> = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> <span class="cn">app</span> = <span class="fn">express</span>();
+
+<span class="cn">app</span>.<span class="fn">use</span>(<span class="cn">express</span>.<span class="fn">json</span>());
+
+<span class="cn">app</span>.<span class="fn">listen</span>(<span class="num">3000</span>, () => {
+  <span class="cn">console</span>.<span class="fn">log</span>(<span class="str">"Server running on port 3000"</span>);
+  <span class="cm">// Server port 3000 par chal raha hai</span>
+});</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">Step 3: Books API Banao (Create Books API)</div>
+
+          <!-- GET All Books -->
+          <p style="font-weight:600; color:var(--green); margin-bottom:8px; font-size:15px;">📗 GET — Tamam Kitaabein Haasil Karo (GET All Books)</p>
+          <div class="code-wrap" style="margin-bottom:20px;">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript</span>
+            </div>
+            <pre><code><span class="kw">let</span> <span class="cn">books</span> = [];   <span class="cm">// Kitaabon ki khaali list</span>
+
+<span class="cn">app</span>.<span class="fn">get</span>(<span class="str">'/books'</span>, (<span class="fn">req</span>, <span class="fn">res</span>) => {
+  <span class="fn">res</span>.<span class="fn">json</span>(<span class="cn">books</span>);  <span class="cm">// Tamam kitaabein bhejo</span>
+});</code></pre>
+          </div>
+
+          <!-- POST Book -->
+          <p style="font-weight:600; color:var(--cyan); margin-bottom:8px; font-size:15px;">📘 POST — Nai Kitaab Shamil Karo (POST Book)</p>
+          <div class="code-wrap" style="margin-bottom:20px;">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript</span>
+            </div>
+            <pre><code><span class="cn">app</span>.<span class="fn">post</span>(<span class="str">'/books'</span>, (<span class="fn">req</span>, <span class="fn">res</span>) => {
+  <span class="kw">const</span> <span class="cn">book</span> = <span class="fn">req</span>.<span class="prop">body</span>;  <span class="cm">// Request se kitaab ka data lo</span>
+  <span class="cn">books</span>.<span class="fn">push</span>(<span class="cn">book</span>);         <span class="cm">// List mein shamil karo</span>
+  <span class="fn">res</span>.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(<span class="cn">book</span>); <span class="cm">// 201 = Bana diya</span>
+});</code></pre>
+          </div>
+
+          <!-- GET by ID -->
+          <p style="font-weight:600; color:var(--green); margin-bottom:8px; font-size:15px;">📗 GET — ID se Aik Kitaab Haasil Karo (GET Book by ID)</p>
+          <div class="code-wrap" style="margin-bottom:20px;">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript</span>
+            </div>
+            <pre><code><span class="cn">app</span>.<span class="fn">get</span>(<span class="str">'/books/:id'</span>, (<span class="fn">req</span>, <span class="fn">res</span>) => {
+  <span class="kw">const</span> <span class="cn">id</span> = <span class="fn">parseInt</span>(<span class="fn">req</span>.<span class="prop">params</span>.<span class="prop">id</span>);
+  <span class="kw">const</span> <span class="cn">book</span> = <span class="cn">books</span>.<span class="fn">find</span>(<span class="fn">b</span> => <span class="fn">b</span>.<span class="prop">id</span> === <span class="cn">id</span>);
+
+  <span class="kw">if</span> (!<span class="cn">book</span>) {
+    <span class="cm">// Kitaab nahi mili to 404 bhejo</span>
+    <span class="kw">return</span> <span class="fn">res</span>.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">"Book not found"</span> });
+  }
+  <span class="fn">res</span>.<span class="fn">json</span>(<span class="cn">book</span>);
+});</code></pre>
+          </div>
+
+          <!-- PUT Update -->
+          <p style="font-weight:600; color:var(--yellow); margin-bottom:8px; font-size:15px;">📙 PUT — Kitaab Update Karo (PUT Update Book)</p>
+          <div class="code-wrap" style="margin-bottom:20px;">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript</span>
+            </div>
+            <pre><code><span class="cn">app</span>.<span class="fn">put</span>(<span class="str">'/books/:id'</span>, (<span class="fn">req</span>, <span class="fn">res</span>) => {
+  <span class="kw">const</span> <span class="cn">id</span> = <span class="fn">parseInt</span>(<span class="fn">req</span>.<span class="prop">params</span>.<span class="prop">id</span>);
+  <span class="kw">const</span> <span class="cn">index</span> = <span class="cn">books</span>.<span class="fn">findIndex</span>(<span class="fn">b</span> => <span class="fn">b</span>.<span class="prop">id</span> === <span class="cn">id</span>);
+
+  <span class="kw">if</span> (<span class="cn">index</span> === -<span class="num">1</span>) {
+    <span class="cm">// Index nahi mila to 404</span>
+    <span class="kw">return</span> <span class="fn">res</span>.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">"Book not found"</span> });
+  }
+  <span class="cn">books</span>[<span class="cn">index</span>] = <span class="fn">req</span>.<span class="prop">body</span>;     <span class="cm">// Naya data rakho</span>
+  <span class="fn">res</span>.<span class="fn">json</span>(<span class="cn">books</span>[<span class="cn">index</span>]);
+});</code></pre>
+          </div>
+
+          <!-- DELETE -->
+          <p style="font-weight:600; color:var(--pink); margin-bottom:8px; font-size:15px;">📕 DELETE — Kitaab Mitao (DELETE Book)</p>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+              <span class="code-label">JavaScript</span>
+            </div>
+            <pre><code><span class="cn">app</span>.<span class="fn">delete</span>(<span class="str">'/books/:id'</span>, (<span class="fn">req</span>, <span class="fn">res</span>) => {
+  <span class="kw">const</span> <span class="cn">id</span> = <span class="fn">parseInt</span>(<span class="fn">req</span>.<span class="prop">params</span>.<span class="prop">id</span>);
+  <span class="cm">// Us kitaab ko hata do jis ka id match kare</span>
+  <span class="cn">books</span> = <span class="cn">books</span>.<span class="fn">filter</span>(<span class="fn">b</span> => <span class="fn">b</span>.<span class="prop">id</span> !== <span class="cn">id</span>);
+  <span class="fn">res</span>.<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">"Book deleted"</span> }); <span class="cm">// Kitaab mit gayi</span>
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Activity 4 -->
+    <div class="activity">
+      <div class="activity-title">🎯 Student Activity 4 — Haath se Kaamo (Hands-on Practice — 15 Minutes)</div>
+      <p style="color:var(--text2); margin-bottom:14px;">Students ko yeh karna hai:</p>
+
+      <ul class="fancy-list">
+        <li><strong>1.</strong> POST istemaal karke <strong>3 kitaabein add karo</strong></li>
+        <li><strong>2.</strong> GET se <strong>tamam kitaabein haasil karo</strong> (Retrieve all books)</li>
+        <li><strong>3.</strong> Koi <strong>ek kitaab update karo</strong> (Update one book)</li>
+        <li><strong>4.</strong> Koi <strong>ek kitaab mitao</strong> (Delete one book)</li>
+      </ul>
+
+      <div class="info-box orange" style="margin-top:16px;">
+        <span class="info-box-icon">🔬</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Testing ka Tareeqa:</div>
+          <div class="info-box-text"><strong>Postman</strong> istemaal karo — yeh ek powerful tool hai jisse aap API requests bhej aur unke responses dekh sakte ho.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 5 — Advanced Concepts
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon pink">🚀</div>
+      <div class="sec-meta">
+        <div class="sec-label pink">🔶 Part 5 — Advanced</div>
+        <h2 class="sec-title">Advanced Concepts (Aaala Tareeqe)</h2>
+      </div>
+      <span class="sec-time">100 – 115 Minute</span>
+    </div>
+
+    <!-- Query Parameters -->
+    <div class="card pink">
+      <div class="card-title">🔍 1. Query Parameters</div>
+      <p>Query parameters URL ke saath extra malumat bhejne ka tareeqa hai. Yeh <strong>URL ke akhir mein <span class="ic">?</span> ke baad</strong> likhte hain.</p>
+      <div class="info-box pink">
+        <span class="info-box-icon">📌</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Misal (Example):</div>
+          <div class="info-box-text">
+            Sirf "Ali" ki likhi kitaabein chahiye ho to:<br>
+            <span class="endpoint-pill" style="margin-top:8px; display:inline-flex;">GET /books?author=Ali</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card pink">
+      <div class="card-title">📄 2. Pagination (Safha bandi)</div>
+      <p>Jab kitaabon ya records ki tadaad zyada ho to hum unhe <strong>chote hisson (pages) mein</strong> taqseem karte hain — yeh Pagination hai.</p>
+      <div class="info-box pink">
+        <span class="info-box-icon">📌</span>
+        <div class="info-box-body">
+          <div class="info-box-title">Misal (Example):</div>
+          <div class="info-box-text">
+            Pehle page par sirf 10 kitaabein lo:<br>
+            <span class="endpoint-pill" style="margin-top:8px; display:inline-flex;">GET /books?page=1&limit=10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Authentication -->
+    <div class="card pink">
+      <div class="card-title">🔐 3. Authentication — Bunyaadi Fikr (Basic Concept)</div>
+      <p>Secure APIs ke liye <strong>JWT (JSON Web Token)</strong> istemaal karte hain. Yeh ek digital pehchaan patr (ID card) ki tarah hota hai.</p>
+
+      <p style="font-weight:700; color:var(--pink); margin-bottom:12px;">🔄 Login Flow (Login ka Silsila):</p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <span>User apni credentials (username/password) bhejta hai (User sends credentials)</span>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <span>Server verify karta hai — check karta hai ke credentials sahi hain ya nahi (Server verifies)</span>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <span>Server ek <strong>token</strong> bheji bhejta hai — jaise ek security pass (Server sends token)</span>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <span>Client agle requests mein yeh token <strong>header</strong> mein bhejta hai (Client sends token in header)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 6 — Final Discussion + Summary
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon violet">💬</div>
+      <div class="sec-meta">
+        <div class="sec-label violet">🔷 Akhri Hissa</div>
+        <h2 class="sec-title">Aakhri Class Discussion + Aaj ki Summary</h2>
+      </div>
+      <span class="sec-time">115 – 120 Minute</span>
+    </div>
+
+    <!-- Discussion -->
+    <div class="card violet">
+      <div class="card-title">💬 Aakhri Class Discussion (Final Class Discussion)</div>
+      <p>Students se yeh poochho:</p>
+
+      <div class="short-q">
+        <span class="short-q-n">Q.1</span>
+        <span class="short-q-t">REST APIs <strong>stateless</strong> kyun hoti hain? Iska kya faaida hai?</span>
+      </div>
+      <div class="short-q">
+        <span class="short-q-n">Q.2</span>
+        <span class="short-q-t">Agar hum sahi HTTP status codes istemaal na karein to kya hoga? Kya mushkilaat aa sakti hain?</span>
+      </div>
+      <div class="short-q">
+        <span class="short-q-n">Q.3</span>
+        <span class="short-q-t">Hamare Bookstore API mein aur kya improvements (behtari) add ki ja sakti hain?</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card violet">
+      <div class="card-title">📋 Aaj ki Lecture ki Summary (Summary of Today's Lecture)</div>
+      <p>Students ne aaj yeh sab seekha:</p>
+      <div class="checklist">
+        <div class="check-item"><span class="check-icon">✔️</span> REST API kya hai (What REST API is)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> REST ke usool (REST principles)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> Endpoints design karna (Designing endpoints)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> HTTP methods ka istemaal (HTTP methods)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> Status codes (Status codes)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> Node.js mein amali nifaaz (Practical implementation in Node.js)</div>
+        <div class="check-item"><span class="check-icon">✔️</span> Postman se testing (Testing with Postman)</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 7 — Assignment
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon cyan">📝</div>
+      <div class="sec-meta">
+        <div class="sec-label cyan">📝 Ghar ka Kaam</div>
+        <h2 class="sec-title">Assignment (Ghar ka Kaam)</h2>
+      </div>
+    </div>
+
+    <div class="assignment">
+      <div class="card-title" style="font-size:20px; color:var(--cyan);">🛒 E-Commerce System ke liye REST API Design Karo</div>
+      <p style="margin-bottom:20px;">Yeh resources ke liye mukammal REST API design karo:</p>
+
+      <div class="grid-3" style="margin-bottom:24px;">
+        <div class="concept-card cyan">
+          <span class="emo">👥</span>
+          <div class="lbl">Customers</div>
+          <div class="dsc">Grahak — jو khareedar hain</div>
+        </div>
+        <div class="concept-card orange">
+          <span class="emo">📦</span>
+          <div class="lbl">Products</div>
+          <div class="dsc">Maal — jo bechi jaati hai</div>
+        </div>
+        <div class="concept-card green">
+          <span class="emo">🛒</span>
+          <div class="lbl">Cart</div>
+          <div class="dsc">Kharidaari ki takri</div>
+        </div>
+        <div class="concept-card yellow">
+          <span class="emo">📋</span>
+          <div class="lbl">Orders</div>
+          <div class="dsc">Orders (Kharidaari ke hukumaat)</div>
+        </div>
+        <div class="concept-card pink">
+          <span class="emo">💳</span>
+          <div class="lbl">Payments</div>
+          <div class="dsc">Adaigiyaan (Payments)</div>
+        </div>
+      </div>
+
+      <p style="font-weight:700; color:var(--cyan); margin-bottom:14px;">📐 Yeh draw/design karo:</p>
+      <ul class="fancy-list">
+        <li>📌 Endpoints (tamam raahein)</li>
+        <li>⚡ HTTP Methods (har endpoint ke liye)</li>
+        <li>📄 Sample JSON (misal ka data format)</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECTION 8 — References
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="sec-header">
+      <div class="sec-icon orange">📚</div>
+      <div class="sec-meta">
+        <div class="sec-label orange">📚 Hawale</div>
+        <h2 class="sec-title">References — Academic Integrity ke Liye (Hawale)</h2>
+      </div>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">📖 Maakhiz (References)</div>
+      <ul class="fancy-list">
+        <li>
+          <strong>REST architectural style</strong> — Roy Fielding ne apni 2000 ki doctoral dissertation mein define kiya
+        </li>
+        <li>
+          <strong>HTTP Protocol (RFC 2616)</strong> — HTTP ka sarkari technical dastaawez
+        </li>
+      </ul>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">💡 Agar Zaroorat Ho to Yeh Bhi Mil Sakta Hai:</div>
+      <p style="margin-bottom:14px;">Agar aap chahein to ye cheezein bhi faraham ki ja sakti hain:</p>
+      <ul class="fancy-list">
+        <li>📊 <strong>PowerPoint slides</strong> — presentation ke liye tayyar slides</li>
+        <li>🧪 <strong>Lab manual version</strong> — lab session ke liye alag version</li>
+        <li>🗄️ <strong>Bookstore ka ER diagram</strong> — database ka diagram</li>
+        <li>🔗 <strong>Database integration version</strong> (MongoDB/MySQL) — database ke saath version</li>
+        <li>🔐 <strong>JWT authentication full implementation</strong> — mukammal authentication ka code</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========================================================
+     FOOTER
+======================================================== -->
+<footer>
+  <div class="f-logo">REST API Lecture</div>
+  <p>Roman Urdu mein mukammal Lecture Notes</p>
+  <p>Theory + Practical — Node.js + Express.js + Postman</p>
+  <div style="margin-top:20px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+    <span class="badge cyan">REST API</span>
+    <span class="badge green">Node.js</span>
+    <span class="badge yellow">Express.js</span>
+    <span class="badge orange">Postman</span>
+    <span class="badge violet">JWT</span>
+    <span class="badge pink">HTTP Methods</span>
+  </div>
+</footer>
+
+<!-- ========================================================
+     SCROLL REVEAL JS
+======================================================== -->
+<script>
+  const sections = document.querySelectorAll('.section');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.07 });
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>

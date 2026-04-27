@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeScript - Classes, Inheritance aur Interfaces | Lecture Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Fira+Code:wght@400;500;600&family=Noto+Nastaliq+Urdu&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0e1a;
+    --bg-card: #111827;
+    --bg-card2: #1a2235;
+    --accent-blue: #38bdf8;
+    --accent-green: #4ade80;
+    --accent-yellow: #fbbf24;
+    --accent-red: #f87171;
+    --accent-purple: #c084fc;
+    --accent-orange: #fb923c;
+    --accent-teal: #2dd4bf;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: rgba(255,255,255,0.07);
+    --glow-blue: 0 0 30px rgba(56,189,248,0.25);
+    --glow-green: 0 0 30px rgba(74,222,128,0.25);
+    --glow-yellow: 0 0 30px rgba(251,191,36,0.25);
+    --glow-purple: 0 0 30px rgba(192,132,252,0.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ========== BACKGROUND EFFECTS ========== */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(56,189,248,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(192,132,252,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(74,222,128,0.04) 0%, transparent 60%);
+    animation: bgPulse 10s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes bgPulse {
+    0% { transform: translate(0,0) rotate(0deg); }
+    100% { transform: translate(2%, 2%) rotate(1deg); }
+  }
+
+  /* ========== HERO HEADER ========== */
+  .hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 80px 20px 60px;
+    background: linear-gradient(180deg, rgba(56,189,248,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '{ }';
+    position: absolute;
+    font-family: 'Fira Code', monospace;
+    font-size: 280px;
+    color: rgba(56,189,248,0.03);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: floatBg 8s ease-in-out infinite;
+  }
+
+  @keyframes floatBg {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -52%) scale(1.02); }
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(192,132,252,0.2));
+    border: 1px solid rgba(56,189,248,0.3);
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 8px 24px;
+    border-radius: 50px;
+    margin-bottom: 28px;
+    animation: fadeInDown 0.8s ease forwards;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 6vw, 72px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #38bdf8, #c084fc, #4ade80);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+    animation: fadeInDown 0.8s ease 0.1s forwards;
+    opacity: 0;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    font-weight: 300;
+    margin-bottom: 40px;
+    animation: fadeInDown 0.8s ease 0.2s forwards;
+    opacity: 0;
+  }
+
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    animation: fadeInDown 0.8s ease 0.3s forwards;
+    opacity: 0;
+  }
+
+  .meta-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+  }
+
+  .meta-pill:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-2px);
+  }
+
+  .meta-pill .icon { font-size: 16px; }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== MAIN CONTAINER ========== */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ========== SECTION STYLES ========== */
+  .section {
+    margin-bottom: 80px;
+    animation: fadeInUp 0.7s ease forwards;
+    opacity: 0;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+  .section:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  .section-num.blue { background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #fff; box-shadow: var(--glow-blue); }
+  .section-num.green { background: linear-gradient(135deg, #16a34a, #4ade80); color: #fff; box-shadow: var(--glow-green); }
+  .section-num.yellow { background: linear-gradient(135deg, #d97706, #fbbf24); color: #fff; box-shadow: var(--glow-yellow); }
+  .section-num.red { background: linear-gradient(135deg, #dc2626, #f87171); color: #fff; box-shadow: 0 0 30px rgba(248,113,113,0.25); }
+  .section-num.purple { background: linear-gradient(135deg, #7c3aed, #c084fc); color: #fff; box-shadow: var(--glow-purple); }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3.5vw, 34px);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .section-time {
+    margin-left: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  /* ========== CARDS ========== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-accent, #38bdf8), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .card:hover {
+    border-color: var(--card-accent, rgba(56,189,248,0.3));
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3), var(--glow-blue);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card.blue { --card-accent: #38bdf8; }
+  .card.green { --card-accent: #4ade80; }
+  .card.yellow { --card-accent: #fbbf24; }
+  .card.red { --card-accent: #f87171; }
+  .card.purple { --card-accent: #c084fc; }
+  .card.orange { --card-accent: #fb923c; }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title .emoji { font-size: 22px; }
+
+  /* ========== LEARNING OBJECTIVES ========== */
+  .objectives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .obj-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .obj-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(56,189,248,0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .obj-item:hover {
+    border-color: rgba(56,189,248,0.4);
+    transform: translateX(6px);
+  }
+
+  .obj-item:hover::after { opacity: 1; }
+
+  .obj-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(192,132,252,0.2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .obj-text { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ========== TIMELINE TABLE ========== */
+  .timeline {
+    display: grid;
+    gap: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .timeline-header {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(192,132,252,0.15));
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+    background: var(--bg-card);
+  }
+
+  .timeline-row:last-child { border-bottom: none; }
+
+  .timeline-row:hover {
+    background: var(--bg-card2);
+    padding-left: 32px;
+  }
+
+  .timeline-time {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    color: var(--accent-blue);
+    font-weight: 500;
+  }
+
+  .timeline-topic {
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  /* ========== CODE BLOCKS ========== */
+  .code-wrapper {
+    margin: 20px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .code-wrapper:hover {
+    border-color: rgba(56,189,248,0.3);
+    box-shadow: var(--glow-blue);
+  }
+
+  .code-header {
+    background: rgba(255,255,255,0.04);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-dots { display: flex; gap: 6px; }
+  .code-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .code-dot.r { background: #f87171; }
+  .code-dot.y { background: #fbbf24; }
+  .code-dot.g { background: #4ade80; }
+
+  .code-lang {
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  pre {
+    background: #0d1117;
+    padding: 24px 28px;
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  code {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #e6edf3;
+  }
+
+  .kw { color: #ff7b72; } /* keywords */
+  .cn { color: #79c0ff; } /* class names */
+  .fn { color: #d2a8ff; } /* function names */
+  .st { color: #a5d6ff; } /* strings */
+  .co { color: #8b949e; font-style: italic; } /* comments */
+  .nm { color: #ffa657; } /* numbers */
+  .ty { color: #4ade80; } /* types */
+  .op { color: #ff7b72; } /* operators */
+
+  /* ========== INFO BOXES ========== */
+  .info-box {
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin: 20px 0;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: transform 0.3s ease;
+  }
+
+  .info-box:hover { transform: translateX(6px); }
+
+  .info-box.blue { background: rgba(56,189,248,0.08); border-left: 3px solid var(--accent-blue); }
+  .info-box.green { background: rgba(74,222,128,0.08); border-left: 3px solid var(--accent-green); }
+  .info-box.yellow { background: rgba(251,191,36,0.08); border-left: 3px solid var(--accent-yellow); }
+  .info-box.purple { background: rgba(192,132,252,0.08); border-left: 3px solid var(--accent-purple); }
+  .info-box.orange { background: rgba(251,146,60,0.08); border-left: 3px solid var(--accent-orange); }
+  .info-box.red { background: rgba(248,113,113,0.08); border-left: 3px solid var(--accent-red); }
+
+  .info-box-icon { font-size: 24px; flex-shrink: 0; }
+  .info-box-content { flex: 1; }
+  .info-box-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .info-box.blue .info-box-title { color: var(--accent-blue); }
+  .info-box.green .info-box-title { color: var(--accent-green); }
+  .info-box.yellow .info-box-title { color: var(--accent-yellow); }
+  .info-box.purple .info-box-title { color: var(--accent-purple); }
+  .info-box.orange .info-box-title { color: var(--accent-orange); }
+  .info-box.red .info-box-title { color: var(--accent-red); }
+  .info-box-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* ========== CONCEPT GRID ========== */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .concept-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    text-align: center;
+    transition: all 0.35s ease;
+    cursor: default;
+  }
+
+  .concept-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .concept-card.blue:hover { border-color: var(--accent-blue); box-shadow: var(--glow-blue); }
+  .concept-card.green:hover { border-color: var(--accent-green); box-shadow: var(--glow-green); }
+  .concept-card.yellow:hover { border-color: var(--accent-yellow); box-shadow: var(--glow-yellow); }
+  .concept-card.purple:hover { border-color: var(--accent-purple); box-shadow: var(--glow-purple); }
+  .concept-card.orange:hover { border-color: var(--accent-orange); }
+  .concept-card.red:hover { border-color: var(--accent-red); }
+
+  .concept-emoji { font-size: 36px; margin-bottom: 12px; display: block; }
+  .concept-label { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+  .concept-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ========== MODIFIER TABLE ========== */
+  .modifier-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  .modifier-table thead tr {
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(192,132,252,0.1));
+  }
+
+  .modifier-table th {
+    padding: 14px 20px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .modifier-table td {
+    padding: 14px 20px;
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+  }
+
+  .modifier-table tr { transition: all 0.3s ease; background: var(--bg-card); }
+
+  .modifier-table tbody tr:hover {
+    background: var(--bg-card2);
+  }
+
+  .modifier-table .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .badge.blue { background: rgba(56,189,248,0.15); color: var(--accent-blue); border: 1px solid rgba(56,189,248,0.3); }
+  .badge.red { background: rgba(248,113,113,0.15); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.3); }
+  .badge.orange { background: rgba(251,146,60,0.15); color: var(--accent-orange); border: 1px solid rgba(251,146,60,0.3); }
+  .badge.green { background: rgba(74,222,128,0.15); color: var(--accent-green); border: 1px solid rgba(74,222,128,0.3); }
+  .badge.yellow { background: rgba(251,191,36,0.15); color: var(--accent-yellow); border: 1px solid rgba(251,191,36,0.3); }
+  .badge.purple { background: rgba(192,132,252,0.15); color: var(--accent-purple); border: 1px solid rgba(192,132,252,0.3); }
+  .badge.gray { background: rgba(148,163,184,0.1); color: var(--text-secondary); border: 1px solid var(--border); }
+
+  /* ========== ACTIVITY CARD ========== */
+  .activity-card {
+    background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(251,146,60,0.06));
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .activity-card::before {
+    content: '🎯';
+    position: absolute;
+    right: 24px;
+    top: 20px;
+    font-size: 40px;
+    opacity: 0.2;
+    transition: all 0.3s ease;
+  }
+
+  .activity-card:hover::before { opacity: 0.5; transform: scale(1.2) rotate(10deg); }
+
+  .activity-card:hover {
+    border-color: rgba(251,191,36,0.5);
+    box-shadow: var(--glow-yellow);
+    transform: translateY(-2px);
+  }
+
+  .activity-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ========== DISCUSSION CARD ========== */
+  .discussion-card {
+    background: linear-gradient(135deg, rgba(192,132,252,0.08), rgba(56,189,248,0.05));
+    border: 1px solid rgba(192,132,252,0.25);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin: 16px 0;
+    transition: all 0.3s ease;
+  }
+
+  .discussion-card:hover {
+    border-color: rgba(192,132,252,0.5);
+    transform: translateX(4px);
+  }
+
+  .discussion-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent-purple);
+    margin-bottom: 10px;
+  }
+
+  /* ========== BENEFITS LIST ========== */
+  .benefits-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .benefits-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--text-secondary);
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .benefits-list li:hover {
+    border-color: rgba(74,222,128,0.3);
+    color: var(--text-primary);
+    transform: translateX(8px);
+    background: var(--bg-card2);
+  }
+
+  .benefits-list li::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(74,222,128,0.6);
+  }
+
+  /* ========== COMPARISON TABLE ========== */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .compare-table thead th {
+    padding: 18px 22px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .compare-table thead th:first-child {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .compare-table thead th:nth-child(2) {
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(56,189,248,0.05));
+    color: var(--accent-blue);
+  }
+
+  .compare-table thead th:nth-child(3) {
+    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(192,132,252,0.05));
+    color: var(--accent-purple);
+  }
+
+  .compare-table td {
+    padding: 16px 22px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .compare-table td:first-child {
+    background: rgba(255,255,255,0.02);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+
+  .compare-table tr { background: var(--bg-card); transition: all 0.3s ease; }
+  .compare-table tbody tr:hover { background: var(--bg-card2); }
+
+  .check { color: var(--accent-green); font-size: 18px; }
+  .cross { color: var(--accent-red); font-size: 18px; }
+
+  /* ========== QUIZ SECTION ========== */
+  .quiz-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .quiz-q {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px 28px;
+    transition: all 0.3s ease;
+  }
+
+  .quiz-q:hover {
+    border-color: rgba(56,189,248,0.3);
+    box-shadow: var(--glow-blue);
+  }
+
+  .quiz-q-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .quiz-num {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .quiz-option {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quiz-option:hover {
+    background: rgba(56,189,248,0.08);
+    border-color: rgba(56,189,248,0.3);
+    color: var(--text-primary);
+    transform: translateX(4px);
+  }
+
+  .quiz-option.correct {
+    background: rgba(74,222,128,0.12);
+    border-color: rgba(74,222,128,0.5);
+    color: var(--accent-green);
+  }
+
+  .quiz-option .opt-letter {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .quiz-option.correct .opt-letter {
+    background: rgba(74,222,128,0.2);
+    color: var(--accent-green);
+  }
+
+  /* ========== SHORT QUESTIONS ========== */
+  .short-q-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .short-q {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+  }
+
+  .short-q:hover {
+    border-color: rgba(251,191,36,0.3);
+    transform: translateX(6px);
+    background: var(--bg-card2);
+  }
+
+  .short-q-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    color: var(--accent-yellow);
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 8px;
+    padding: 4px 10px;
+    flex-shrink: 0;
+  }
+
+  .short-q-text { font-size: 15px; color: var(--text-secondary); padding-top: 2px; }
+
+  /* ========== PRACTICE TASK ========== */
+  .practice-task {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-card2));
+    border: 1px solid rgba(45,212,191,0.25);
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .practice-task::before {
+    content: '💻';
+    position: absolute;
+    right: 28px;
+    bottom: 20px;
+    font-size: 60px;
+    opacity: 0.08;
+  }
+
+  .practice-task:hover {
+    border-color: rgba(45,212,191,0.5);
+    box-shadow: 0 0 30px rgba(45,212,191,0.15);
+  }
+
+  .practice-hierarchy {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 20px 0;
+  }
+
+  .h-level {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+    font-size: 15px;
+  }
+
+  .h-level:hover {
+    transform: translateX(8px);
+    border-color: rgba(45,212,191,0.4);
+    color: var(--accent-teal);
+  }
+
+  .h-indent-1 { margin-left: 0; }
+  .h-indent-2 { margin-left: 32px; }
+  .h-indent-3 { margin-left: 64px; }
+
+  .h-arrow { color: var(--text-muted); font-family: 'Fira Code', monospace; font-size: 14px; }
+
+  /* ========== REFERENCES SECTION ========== */
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .ref-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.3s ease;
+  }
+
+  .ref-card:hover {
+    border-color: rgba(56,189,248,0.3);
+    transform: translateY(-3px);
+    box-shadow: var(--glow-blue);
+  }
+
+  .ref-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(192,132,252,0.15));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ========== REAL LIFE EXAMPLE ========== */
+  .reallife {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin: 16px 0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reallife::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-teal), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .reallife:hover::after { opacity: 1; }
+
+  .reallife:hover {
+    border-color: rgba(45,212,191,0.3);
+    transform: scale(1.01);
+  }
+
+  .reallife-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-teal);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ========== KEYWORD HIGHLIGHT ========== */
+  .kw-highlight {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(192,132,252,0.1));
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'Fira Code', monospace;
+    font-size: 16px;
+    color: var(--accent-blue);
+    font-weight: 600;
+    margin: 4px 0;
+    transition: all 0.3s ease;
+  }
+
+  .kw-highlight:hover {
+    background: rgba(56,189,248,0.2);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-blue);
+  }
+
+  /* ========== DIVIDER ========== */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* ========== NOTE BOX ========== */
+  .note-box {
+    background: rgba(248,113,113,0.06);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 14px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+  }
+
+  .note-box:hover {
+    border-color: rgba(248,113,113,0.4);
+    transform: translateX(4px);
+  }
+
+  .note-box-icon { font-size: 22px; flex-shrink: 0; }
+  .note-box-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* ========== WHEN TO USE ========== */
+  .when-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 600px) {
+    .when-grid { grid-template-columns: 1fr; }
+    .timeline-header, .timeline-row { grid-template-columns: 130px 1fr; }
+    .hero-meta { gap: 12px; }
+  }
+
+  .when-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    transition: all 0.35s ease;
+  }
+
+  .when-card.blue:hover {
+    border-color: var(--accent-blue);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-4px);
+  }
+
+  .when-card.purple:hover {
+    border-color: var(--accent-purple);
+    box-shadow: var(--glow-purple);
+    transform: translateY(-4px);
+  }
+
+  .when-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .when-card.blue .when-card-title { color: var(--accent-blue); }
+  .when-card.purple .when-card-title { color: var(--accent-purple); }
+
+  .when-card-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* ========== COMBINED EXAMPLE ========== */
+  .combined-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 20px 0;
+  }
+
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    transition: all 0.3s ease;
+  }
+
+  .flow-item:hover {
+    transform: translateX(8px);
+    background: var(--bg-card2);
+  }
+
+  .flow-item.interface { border-left: 3px solid var(--accent-purple); }
+  .flow-item.class-item { border-left: 3px solid var(--accent-blue); }
+  .flow-item.subclass { border-left: 3px solid var(--accent-green); margin-left: 40px; }
+
+  .flow-tag {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .flow-tag.purple { background: rgba(192,132,252,0.15); color: var(--accent-purple); border: 1px solid rgba(192,132,252,0.3); }
+  .flow-tag.blue { background: rgba(56,189,248,0.15); color: var(--accent-blue); border: 1px solid rgba(56,189,248,0.3); }
+  .flow-tag.green { background: rgba(74,222,128,0.15); color: var(--accent-green); border: 1px solid rgba(74,222,128,0.3); }
+
+  /* ========== FOOTER ========== */
+  .footer {
+    text-align: center;
+    padding: 50px 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    background: linear-gradient(135deg, #38bdf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    font-weight: 900;
+  }
+
+  /* ========== SCROLL REVEAL (JS fallback) ========== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ========== FLOATING SHAPES ========== */
+  .float-shape {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: floatShape 12s ease-in-out infinite;
+  }
+
+  .float-shape.s1 { width: 300px; height: 300px; background: rgba(56,189,248,0.04); top: 10%; left: -5%; animation-delay: 0s; }
+  .float-shape.s2 { width: 250px; height: 250px; background: rgba(192,132,252,0.04); top: 60%; right: -5%; animation-delay: 3s; }
+  .float-shape.s3 { width: 200px; height: 200px; background: rgba(74,222,128,0.03); bottom: 20%; left: 40%; animation-delay: 6s; }
+
+  @keyframes floatShape {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  /* ========== INLINE CODE ========== */
+  .ic {
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    background: rgba(56,189,248,0.1);
+    color: var(--accent-blue);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(56,189,248,0.2);
+  }
+
+  /* ========== PARAGRAPH ========== */
+  p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  p strong { color: var(--text-primary); font-weight: 600; }
+
+  /* ========== PART SEPARATOR ========== */
+  .part-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 50px;
+    margin-bottom: 14px;
+  }
+
+  .part-tag.blue { background: rgba(56,189,248,0.1); color: var(--accent-blue); border: 1px solid rgba(56,189,248,0.2); }
+  .part-tag.green { background: rgba(74,222,128,0.1); color: var(--accent-green); border: 1px solid rgba(74,222,128,0.2); }
+  .part-tag.yellow { background: rgba(251,191,36,0.1); color: var(--accent-yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .part-tag.red { background: rgba(248,113,113,0.1); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.2); }
+</style>
+</head>
+<body>
+
+<!-- Floating BG Shapes -->
+<div class="float-shape s1"></div>
+<div class="float-shape s2"></div>
+<div class="float-shape s3"></div>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="hero-badge">📘 Lecture Notes</div>
+  <h1 class="hero-title">TypeScript Classes,<br>Inheritance & Interfaces</h1>
+  <p class="hero-subtitle">TypeScript Language Constructs — Roman Urdu mein mukammal rahnumayi</p>
+  <div class="hero-meta">
+    <div class="meta-pill"><span class="icon">⏱️</span> 2 Ghante ki Class</div>
+    <div class="meta-pill"><span class="icon">📚</span> Theory Class</div>
+    <div class="meta-pill"><span class="icon">🎯</span> 4 Parts</div>
+    <div class="meta-pill"><span class="icon">🧪</span> Quiz Shamil</div>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="container">
+
+  <!-- ===== LEARNING OBJECTIVES ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num blue">🧠</div>
+      <div>
+        <div class="part-tag blue">Maqasid</div>
+        <h2 class="section-title">Sikhne ke Maqasid (Learning Objectives)</h2>
+      </div>
+    </div>
+
+    <p>Is lecture ke khatam hone tak, students ye sab samajhne aur karne ke qabil ho jayenge:</p>
+
+    <div class="objectives-grid">
+      <div class="obj-item">
+        <div class="obj-icon">🏗️</div>
+        <div class="obj-text">TypeScript mein <strong>Classes</strong> ko samjhna aur use karna</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🔗</div>
+        <div class="obj-text"><strong>Inheritance</strong> (warasat) ko samjhna aur implement karna</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">📋</div>
+        <div class="obj-text"><strong>Interfaces</strong> ko define karna aur use mein lana</div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">⚖️</div>
+        <div class="obj-text">Interface aur Class ke darmiyan <strong>farq samjhna</strong></div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🌍</div>
+        <div class="obj-text">In concepts ko <strong>asl zindagi ke masail</strong> mein apply karna</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LECTURE BREAKDOWN ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num blue">⏱️</div>
+      <h2 class="section-title">Lecture ka Waqt-wise Khaka (Lecture Breakdown)</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-header">
+        <span>⏰ Waqt</span>
+        <span>📌 Topic</span>
+      </div>
+      <div class="timeline-row">
+        <span class="timeline-time">0–30 min</span>
+        <span class="timeline-topic">🟦 TypeScript mein Classes</span>
+      </div>
+      <div class="timeline-row">
+        <span class="timeline-time">30–60 min</span>
+        <span class="timeline-topic">🟩 Inheritance (Warasat)</span>
+      </div>
+      <div class="timeline-row">
+        <span class="timeline-time">60–90 min</span>
+        <span class="timeline-topic">🟨 Interfaces</span>
+      </div>
+      <div class="timeline-row">
+        <span class="timeline-time">90–120 min</span>
+        <span class="timeline-topic">🟥 Muqabala + Practice + Quiz</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== PART 1: CLASSES ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num blue">1</div>
+      <div>
+        <div class="part-tag blue">🟦 Part 1 — 0 se 30 Minute</div>
+        <h2 class="section-title">TypeScript mein Classes</h2>
+      </div>
+      <span class="section-time">0–30 min</span>
+    </div>
+
+    <!-- What is a Class -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">📌</span> Class kya hoti hai?</div>
+      <p>Class ek <strong>blueprint (khaka)</strong> hoti hai — jiske zariye objects banaye jaate hain.</p>
+
+      <div class="info-box blue">
+        <span class="info-box-icon">👉</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Aise samjho:</div>
+          <div class="info-box-text">
+            ➤ <strong>Car ka blueprint</strong> → bahut saari cars banaata hai<br>
+            ➤ <strong>Student ka template</strong> → student ke objects banaata hai
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Syntax Example -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">🧾</span> Syntax Example</div>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="cn">Student</span> {
+  <span class="fn">name</span>: <span class="ty">string</span>;
+  <span class="fn">age</span>: <span class="ty">number</span>;
+
+  <span class="kw">constructor</span>(<span class="fn">name</span>: <span class="ty">string</span>, <span class="fn">age</span>: <span class="ty">number</span>) {
+    <span class="kw">this</span>.<span class="fn">name</span> = <span class="fn">name</span>;
+    <span class="kw">this</span>.<span class="fn">age</span> = <span class="fn">age</span>;
+  }
+
+  <span class="fn">display</span>(): <span class="ty">void</span> {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">`Name: ${this.name}, Age: ${this.age}`</span>);
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Key Concepts -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">🔍</span> Aham Concepts (Key Concepts)</div>
+      <div class="concept-grid">
+        <div class="concept-card blue">
+          <span class="concept-emoji">🏷️</span>
+          <div class="concept-label">Properties</div>
+          <div class="concept-desc">Class ke andar maujood variables</div>
+        </div>
+        <div class="concept-card green">
+          <span class="concept-emoji">⚙️</span>
+          <div class="concept-label">Constructor</div>
+          <div class="concept-desc">Object ko initialize karta hai</div>
+        </div>
+        <div class="concept-card yellow">
+          <span class="concept-emoji">🔧</span>
+          <div class="concept-label">Methods</div>
+          <div class="concept-desc">Class ke andar functions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real Life Example -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">🌍</span> Asl Zindagi ki Misal (Real-Life Example)</div>
+      <div class="reallife">
+        <div class="reallife-title">🏦 Bank Account ki Misal</div>
+        <p style="margin:0;">
+          ➤ <strong>Properties</strong> → Account number, Balance<br>
+          ➤ <strong>Methods</strong> → <span class="ic">deposit()</span>, <span class="ic">withdraw()</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Access Modifiers -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">🔐</span> Access Modifiers</div>
+      <p>Access modifiers batate hain ke class ki properties aur methods ko <strong>kahaan se access kiya ja sakta hai</strong>.</p>
+
+      <table class="modifier-table">
+        <thead>
+          <tr>
+            <th>Modifier</th>
+            <th>Matlab (Meaning)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge blue">public</span></td>
+            <td>Har jagah se access ho sakta hai</td>
+          </tr>
+          <tr>
+            <td><span class="badge red">private</span></td>
+            <td>Sirf class ke andar se access ho sakta hai</td>
+          </tr>
+          <tr>
+            <td><span class="badge orange">protected</span></td>
+            <td>Class aur us ke subclasses mein access hota hai</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Access Modifier Example -->
+    <div class="card blue">
+      <div class="card-title"><span class="emoji">💡</span> Access Modifier ki Misal</div>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="cn">BankAccount</span> {
+  <span class="kw">private</span> <span class="fn">balance</span>: <span class="ty">number</span>;
+
+  <span class="kw">constructor</span>(<span class="fn">balance</span>: <span class="ty">number</span>) {
+    <span class="kw">this</span>.<span class="fn">balance</span> = <span class="fn">balance</span>;
+  }
+
+  <span class="fn">deposit</span>(<span class="fn">amount</span>: <span class="ty">number</span>) {
+    <span class="kw">this</span>.<span class="fn">balance</span> += <span class="fn">amount</span>;
+  }
+}</code></pre>
+      </div>
+      <div class="info-box blue">
+        <span class="info-box-icon">💡</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Samjhaawa:</div>
+          <div class="info-box-text"><span class="ic">private balance</span> ka matlab hai ke <strong>balance</strong> ko sirf <span class="ic">BankAccount</span> class ke andar se hi access kiya ja sakta hai — bahar se nahi.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Activity -->
+    <div class="activity-card">
+      <div class="activity-title">🎯 Student Activity (30 minute par)</div>
+      <p style="color: var(--text-secondary); margin-bottom: 14px;">👉 Students se kaho:</p>
+      <div class="info-box yellow">
+        <span class="info-box-icon">✏️</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Kaam:</div>
+          <div class="info-box-text">
+            <strong>"Car"</strong> class banao jisme:<br>
+            ➤ <strong>Properties:</strong> brand (brand naam), speed (raftar)<br>
+            ➤ <strong>Method:</strong> display info (malumat dikhao)
+          </div>
+        </div>
+      </div>
+      <div class="discussion-card">
+        <div class="discussion-title">💬 Discussion (Guftugu)</div>
+        <p style="color: var(--text-secondary); margin: 0;">Agar hum properties ko <strong>private</strong> kar dein to kya hoga?</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== PART 2: INHERITANCE ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num green">2</div>
+      <div>
+        <div class="part-tag green">🟩 Part 2 — 30 se 60 Minute</div>
+        <h2 class="section-title">Inheritance (Warasat)</h2>
+      </div>
+      <span class="section-time">30–60 min</span>
+    </div>
+
+    <!-- What is Inheritance -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">📌</span> Inheritance kya hai?</div>
+      <p>Inheritance ek class ko doosri class ki <strong>properties aur methods dobara istemaal</strong> karne ki ijazat deta hai — bina unhe dubara likhne ke.</p>
+      <div class="info-box green">
+        <span class="info-box-icon">👉</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Asl Zindagi ki Misal:</div>
+          <div class="info-box-text"><strong>Baccha</strong> apne <strong>waalidain</strong> (parents) se sifaat (traits) wiraasat mein paata hai — bilkul isi tarah ek class doosri se properties le sakti hai.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inheritance Syntax -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">🧾</span> Syntax</div>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="cn">Animal</span> {
+  <span class="fn">move</span>(): <span class="ty">void</span> {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">"Moving..."</span>);
+  }
+}
+
+<span class="kw">class</span> <span class="cn">Dog</span> <span class="kw">extends</span> <span class="cn">Animal</span> {
+  <span class="fn">bark</span>(): <span class="ty">void</span> {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">"Barking..."</span>);
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Key Keyword -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">🔍</span> Aham Keyword</div>
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div class="kw-highlight" style="--accent-blue: #4ade80; border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.1);">extends</div>
+        <p style="margin: 0; flex: 1; min-width: 200px;">→ yeh keyword <strong>Inheritance ke liye istemaal hota hai</strong>. Iska matlab hai "wirasat mein lena" ya "extend karna".</p>
+      </div>
+    </div>
+
+    <!-- Real Life Inheritance -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">🌍</span> Asl Zindagi ki Misal</div>
+      <div class="reallife">
+        <div class="reallife-title">🚗 Gaadi (Vehicle) ki Misal</div>
+        <p style="margin: 0;">
+          ➤ <strong>Parent (Waalid) Class:</strong> <span class="ic">Vehicle</span> — move karne ki ability<br>
+          ➤ <strong>Child (Baccha) Classes:</strong> <span class="ic">Car</span>, <span class="ic">Bike</span> — Vehicle se properties wiraasat mein milti hain
+        </p>
+      </div>
+    </div>
+
+    <!-- Method Overriding -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">🔁</span> Method Overriding (Tareeqa Badalna)</div>
+      <p>Jab ek child class apne parent class ke method ko <strong>apne andaaz mein dobara define</strong> kare, use <strong>Method Overriding</strong> kehte hain.</p>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="cn">Animal</span> {
+  <span class="fn">speak</span>(): <span class="ty">void</span> {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">"Animal speaks"</span>);   <span class="co">// Janwar bolta hai</span>
+  }
+}
+
+<span class="kw">class</span> <span class="cn">Cat</span> <span class="kw">extends</span> <span class="cn">Animal</span> {
+  <span class="fn">speak</span>(): <span class="ty">void</span> {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">"Cat meows"</span>);         <span class="co">// Billi miyaaon karti hai</span>
+  }
+}</code></pre>
+      </div>
+      <div class="info-box green">
+        <span class="info-box-icon">💡</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Samjhaawa:</div>
+          <div class="info-box-text"><span class="ic">Cat</span> class ne <span class="ic">Animal</span> class ka <span class="ic">speak()</span> method <strong>override</strong> kar diya — yani apna alag andaz diya. Ab <span class="ic">Cat</span> bolegi "Cat meows".</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefits of Inheritance -->
+    <div class="card green">
+      <div class="card-title"><span class="emoji">🧠</span> Inheritance ke Fayde (Benefits)</div>
+      <ul class="benefits-list">
+        <li>Code Reuse — Code dobara likhne ki zaroorat nahi</li>
+        <li>Saaf Banawat (Cleaner Structure) — Code zyada munazzam hota hai</li>
+        <li>Aasaan Maintenance — Ek jagah change karo, sab jagah asar hoga</li>
+      </ul>
+    </div>
+
+    <!-- Student Activity -->
+    <div class="activity-card">
+      <div class="activity-title">🎯 Student Activity (60 minute par)</div>
+      <p style="color: var(--text-secondary); margin-bottom: 14px;">👉 Students se kaho:</p>
+      <div class="info-box yellow">
+        <span class="info-box-icon">✏️</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Kaam:</div>
+          <div class="info-box-text">
+            Yeh banao:<br>
+            ➤ <strong>Parent class:</strong> <span class="ic">Person</span><br>
+            ➤ <strong>Child class:</strong> <span class="ic">Teacher</span><br>
+            ➤ Dono mein ek method add karo aur use <strong>override</strong> karo
+          </div>
+        </div>
+      </div>
+      <div class="discussion-card">
+        <div class="discussion-title">💬 Discussion (Guftugu)</div>
+        <p style="color: var(--text-secondary); margin: 0;">Overriding kyun faydamand hai? Iska kya faida hota hai?</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== PART 3: INTERFACES ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num yellow">3</div>
+      <div>
+        <div class="part-tag yellow">🟨 Part 3 — 60 se 90 Minute</div>
+        <h2 class="section-title">Interfaces</h2>
+      </div>
+      <span class="section-time">60–90 min</span>
+    </div>
+
+    <!-- What is Interface -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">📌</span> Interface kya hai?</div>
+      <p>Interface ek <strong>contract (muaahida)</strong> define karta hai — jise class ko <strong>poora karna zaroori</strong> hota hai.</p>
+      <div class="info-box yellow">
+        <span class="info-box-icon">👉</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Asl Zindagi ki Amsal:</div>
+          <div class="info-box-text">
+            ➤ <strong>Nokri ka contract</strong> → zimmedaariyaan mutayyin karta hai (defines responsibilities)<br>
+            ➤ <strong>USB port ka standard</strong> → compatibility mutayyin karta hai
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interface Syntax -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">🧾</span> Syntax</div>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">interface</span> <span class="cn">Person</span> {
+  <span class="fn">name</span>: <span class="ty">string</span>;
+  <span class="fn">age</span>: <span class="ty">number</span>;
+}
+
+<span class="kw">class</span> <span class="cn">Student</span> <span class="kw">implements</span> <span class="cn">Person</span> {
+  <span class="fn">name</span>: <span class="ty">string</span>;
+  <span class="fn">age</span>: <span class="ty">number</span>;
+
+  <span class="kw">constructor</span>(<span class="fn">name</span>: <span class="ty">string</span>, <span class="fn">age</span>: <span class="ty">number</span>) {
+    <span class="kw">this</span>.<span class="fn">name</span> = <span class="fn">name</span>;
+    <span class="kw">this</span>.<span class="fn">age</span> = <span class="fn">age</span>;
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Key Keyword implements -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">🔍</span> Aham Keyword</div>
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div class="kw-highlight" style="--accent-blue: #fbbf24; border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.1);">implements</div>
+        <p style="margin: 0; flex: 1; min-width: 200px;">→ yeh keyword <strong>Interface ke saath istemaal hota hai</strong>. Class kehti hai: "Main is interface ka muaahida poora karta hoon."</p>
+      </div>
+    </div>
+
+    <!-- Real Life Shape Example -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">🌍</span> Asl Zindagi ki Misal</div>
+      <div class="reallife">
+        <div class="reallife-title">📐 Shape ki Misal</div>
+        <p style="margin: 0;">
+          ➤ <strong>Interface:</strong> <span class="ic">Shape</span><br>
+          ➤ <strong>Classes:</strong> <span class="ic">Circle</span>, <span class="ic">Rectangle</span><br>
+          ➤ Tamam classes ko <span class="ic">area()</span> method implement karna zaroori hai
+        </p>
+      </div>
+    </div>
+
+    <!-- Interface with Methods -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">🧠</span> Interface mein Methods</div>
+      <p>Interface sirf <strong>method ka naam aur return type</strong> declare karta hai — implementation nahi karta. Implementation class ka kaam hai.</p>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">interface</span> <span class="cn">Shape</span> {
+  <span class="fn">area</span>(): <span class="ty">number</span>;
+}
+
+<span class="kw">class</span> <span class="cn">Circle</span> <span class="kw">implements</span> <span class="cn">Shape</span> {
+  <span class="fn">radius</span>: <span class="ty">number</span>;
+
+  <span class="kw">constructor</span>(<span class="fn">radius</span>: <span class="ty">number</span>) {
+    <span class="kw">this</span>.<span class="fn">radius</span> = <span class="fn">radius</span>;
+  }
+
+  <span class="fn">area</span>(): <span class="ty">number</span> {
+    <span class="kw">return</span> <span class="cn">Math</span>.<span class="fn">PI</span> * <span class="kw">this</span>.<span class="fn">radius</span> * <span class="kw">this</span>.<span class="fn">radius</span>;
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Multiple Interfaces -->
+    <div class="card yellow">
+      <div class="card-title"><span class="emoji">🧩</span> Multiple Interfaces (Kai Interfaces)</div>
+      <p>Ek class <strong>ek se zyada interfaces</strong> implement kar sakti hai — yahi iska sabse bada faaida hai!</p>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+          </div>
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="kw">interface</span> <span class="cn">A</span> { <span class="fn">a</span>: <span class="ty">number</span>; }
+<span class="kw">interface</span> <span class="cn">B</span> { <span class="fn">b</span>: <span class="ty">number</span>; }
+
+<span class="kw">class</span> <span class="cn">Test</span> <span class="kw">implements</span> <span class="cn">A</span>, <span class="cn">B</span> {
+  <span class="fn">a</span> = <span class="nm">10</span>;
+  <span class="fn">b</span> = <span class="nm">20</span>;
+}</code></pre>
+      </div>
+      <div class="info-box yellow">
+        <span class="info-box-icon">💡</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Aham baat:</div>
+          <div class="info-box-text"><span class="ic">Test</span> class ne <strong>dono interfaces A aur B</strong> ko implement kiya — class ke paas <span class="ic">a</span> bhi hai aur <span class="ic">b</span> bhi.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Activity -->
+    <div class="activity-card">
+      <div class="activity-title">🎯 Student Activity (90 minute par)</div>
+      <p style="color: var(--text-secondary); margin-bottom: 14px;">👉 Students se kaho:</p>
+      <div class="info-box yellow">
+        <span class="info-box-icon">✏️</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Kaam:</div>
+          <div class="info-box-text">
+            ➤ <strong>"Employee"</strong> naam ka Interface banao<br>
+            ➤ Properties: <span class="ic">name</span>, <span class="ic">salary</span><br>
+            ➤ Is interface ko <span class="ic">Manager</span> naam ki class mein implement karo
+          </div>
+        </div>
+      </div>
+      <div class="discussion-card">
+        <div class="discussion-title">💬 Discussion (Guftugu)</div>
+        <p style="color: var(--text-secondary); margin: 0;">Kya Interfaces mein <strong>constructors</strong> ho sakte hain? Kyun ya kyun nahi?</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== PART 4: COMPARISON + PRACTICE ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num red">4</div>
+      <div>
+        <div class="part-tag red">🟥 Part 4 — 90 se 120 Minute</div>
+        <h2 class="section-title">Muqabala + Practice (Comparison + Practice)</h2>
+      </div>
+      <span class="section-time">90–120 min</span>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="card red">
+      <div class="card-title"><span class="emoji">⚖️</span> Classes vs Interfaces — Muqabala</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature (Khoobee)</th>
+            <th>🔷 Class</th>
+            <th>🔶 Interface</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Implementation (Amal)</td>
+            <td><span class="check">✅ Haan</span></td>
+            <td><span class="cross">❌ Nahi</span></td>
+          </tr>
+          <tr>
+            <td>Object Banana</td>
+            <td><span class="check">✅ Haan</span></td>
+            <td><span class="cross">❌ Nahi</span></td>
+          </tr>
+          <tr>
+            <td>Constructor</td>
+            <td><span class="check">✅ Haan</span></td>
+            <td><span class="cross">❌ Nahi</span></td>
+          </tr>
+          <tr>
+            <td>Inheritance (Warasat)</td>
+            <td><span class="check">✅ Haan</span></td>
+            <td><span class="check">✅ Haan</span></td>
+          </tr>
+          <tr>
+            <td>Multiple Inheritance</td>
+            <td><span class="cross">❌ Nahi</span></td>
+            <td><span class="check">✅ Haan</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- When to Use What -->
+    <div class="card red">
+      <div class="card-title"><span class="emoji">🧠</span> Kya Istemaal Karo? (When to Use What?)</div>
+      <div class="when-grid">
+        <div class="when-card blue">
+          <div class="when-card-title">🔷 Class Kab Istemaal Karo?</div>
+          <div class="when-card-text">Jab aapko <strong>implementation (amal)</strong> ki zaroorat ho — yani aapko code aur functionality likhni ho jo kaam kare.</div>
+        </div>
+        <div class="when-card purple">
+          <div class="when-card-title">🔶 Interface Kab Istemaal Karo?</div>
+          <div class="when-card-text">Jab aapko sirf <strong>structure ya contract</strong> define karna ho — yani batana ho ke kya hona chahiye, kaise nahi.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Combined Real Life Example -->
+    <div class="card red">
+      <div class="card-title"><span class="emoji">🌍</span> Mili Jali Asl Zindagi ki Misal (Combined Real-Life Example)</div>
+      <p>Yeh misal dikhaati hai ke Interface, Class, aur Inheritance ko milaa kar kaise istemal karte hain:</p>
+      <div class="combined-flow">
+        <div class="flow-item interface">
+          <span class="flow-tag purple">Interface</span>
+          <span>VehicleRules — gaari ke qawaaneen define karta hai</span>
+        </div>
+        <div class="flow-item class-item">
+          <span class="flow-tag blue">Class</span>
+          <span>Car implements VehicleRules — qawaaneen lagu karta hai</span>
+        </div>
+        <div class="flow-item subclass">
+          <span class="flow-tag green">Subclass</span>
+          <span>ElectricCar extends Car — Car se warasat leta hai</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== QUIZ ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num purple">🧪</div>
+      <h2 class="section-title">Aakhri Quiz (Final Quiz) — 15 to 20 Minute</h2>
+    </div>
+
+    <!-- MCQs -->
+    <div class="card purple">
+      <div class="card-title"><span class="emoji">✅</span> MCQs (Ikhtiyaari Sawalaat)</div>
+      <div class="quiz-wrapper">
+
+        <div class="quiz-q">
+          <div class="quiz-q-text">
+            <span class="quiz-num">1</span>
+            Inheritance ke liye kaunsa keyword istemaal hota hai?
+          </div>
+          <div class="quiz-options">
+            <div class="quiz-option">
+              <span class="opt-letter">a</span>
+              implement
+            </div>
+            <div class="quiz-option correct">
+              <span class="opt-letter">b</span>
+              extends ✅ (Sahi Jawaab)
+            </div>
+            <div class="quiz-option">
+              <span class="opt-letter">c</span>
+              inherit
+            </div>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div class="quiz-q-text">
+            <span class="quiz-num">2</span>
+            Interface mein kya ho sakta hai?
+          </div>
+          <div class="quiz-options">
+            <div class="quiz-option">
+              <span class="opt-letter">a</span>
+              Implementation (Mukammal amal)
+            </div>
+            <div class="quiz-option correct">
+              <span class="opt-letter">b</span>
+              Sirf definitions ✅ (Sahi Jawaab — Sirf aelaan)
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Short Questions -->
+    <div class="card purple">
+      <div class="card-title"><span class="emoji">✍️</span> Mukhtasar Sawalaat (Short Questions)</div>
+      <div class="short-q-list">
+        <div class="short-q">
+          <span class="short-q-num">Q.1</span>
+          <span class="short-q-text">Class aur Interface mein kya farq hai?</span>
+        </div>
+        <div class="short-q">
+          <span class="short-q-num">Q.2</span>
+          <span class="short-q-text">Method Overriding kya hoti hai? Samjhaao.</span>
+        </div>
+        <div class="short-q">
+          <span class="short-q-num">Q.3</span>
+          <span class="short-q-text">Encapsulation (data chipaana) kya hai?</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice Task -->
+    <div class="practice-task card purple">
+      <div class="card-title"><span class="emoji">💻</span> Practice Task (Mashq)</div>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">👉 Yeh design karo (Design karo aur code likho):</p>
+      <div class="practice-hierarchy">
+        <div class="h-level h-indent-1">
+          <span class="badge purple">Interface</span>
+          <span><strong>Device</strong> — device ke zaroori rules define karo</span>
+        </div>
+        <div class="h-level h-indent-2">
+          <span class="h-arrow">└──</span>
+          <span class="badge blue">Class</span>
+          <span><strong>Laptop</strong> — Device implement karo</span>
+        </div>
+        <div class="h-level h-indent-3">
+          <span class="h-arrow">└──</span>
+          <span class="badge green">Subclass</span>
+          <span><strong>GamingLaptop</strong> — Laptop se wirasat lo</span>
+        </div>
+      </div>
+      <div class="info-box purple" style="margin-top: 16px;">
+        <span class="info-box-icon">🎮</span>
+        <div class="info-box-content">
+          <div class="info-box-title">Samjhaawa:</div>
+          <div class="info-box-text">
+            <span class="ic">Device</span> interface banao → <span class="ic">Laptop</span> class use implement kare → <span class="ic">GamingLaptop</span> class <span class="ic">Laptop</span> se inherit kare aur apni khasiyaat add kare.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===== OOP PRINCIPLES ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num purple">📚</div>
+      <h2 class="section-title">References aur Notes</h2>
+    </div>
+
+    <div class="card purple">
+      <div class="card-title"><span class="emoji">📚</span> Malumat ka Zariya (References & Notes)</div>
+      <p>Yeh tamam concepts in maakhiz par mabni hain:</p>
+      <div class="ref-grid">
+        <div class="ref-card">
+          <div class="ref-icon">📘</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">TypeScript Official Documentation</div>
+            <div style="font-size: 13px; color: var(--text-muted);">TypeScript ki sarkari documentation par mabni concepts</div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <div class="ref-icon">🧱</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">Object-Oriented Programming (OOP)</div>
+            <div style="font-size: 13px; color: var(--text-muted);">OOP ke bunyaadi usool is lecture mein shamil hain</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 14px;">🧩 OOP ke Chaar Bunyaadi Usool:</p>
+        <div class="concept-grid">
+          <div class="concept-card blue">
+            <span class="concept-emoji">🔒</span>
+            <div class="concept-label">Encapsulation</div>
+            <div class="concept-desc">Data chipaana — private rakhna aur sirf zaroorat par dikhana</div>
+          </div>
+          <div class="concept-card green">
+            <span class="concept-emoji">🔗</span>
+            <div class="concept-label">Inheritance</div>
+            <div class="concept-desc">Wirasat — ek class se doosri class properties leti hai</div>
+          </div>
+          <div class="concept-card yellow">
+            <span class="concept-emoji">🎭</span>
+            <div class="concept-label">Abstraction</div>
+            <div class="concept-desc">Uchchi soch — complexity chipaao, asaan interface do</div>
+          </div>
+          <div class="concept-card purple">
+            <span class="concept-emoji">🔄</span>
+            <div class="concept-label">Polymorphism</div>
+            <div class="concept-desc">Ek cheez kai roopon mein — ek method alag alag classes mein alag kam kare</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning Note -->
+    <div class="note-box">
+      <span class="note-box-icon">⚠️</span>
+      <div class="note-box-text">
+        <strong style="color: var(--accent-red);">Aham Noot (Important Note):</strong><br>
+        Koi bahari hawala (external citation) zaroori nahi — yeh sab TypeScript aur OOP ke buniyaadi mazmoon ka hissa hai jo sarkari documentation aur aami taleemi maakhiz par mabni hai.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== QUICK SUMMARY ===== -->
+  <section class="section reveal">
+    <div class="section-header">
+      <div class="section-num blue">📝</div>
+      <h2 class="section-title">Mukhtasar Khulasa (Quick Summary)</h2>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card blue">
+        <span class="concept-emoji">🏗️</span>
+        <div class="concept-label">Class</div>
+        <div class="concept-desc">Objects banane ka blueprint. Properties, Constructor aur Methods hote hain.</div>
+      </div>
+      <div class="concept-card green">
+        <span class="concept-emoji">🔗</span>
+        <div class="concept-label">Inheritance</div>
+        <div class="concept-desc"><span class="ic" style="font-size: 12px;">extends</span> se kaam leta hai. Code reuse hota hai, overriding bhi hoti hai.</div>
+      </div>
+      <div class="concept-card yellow">
+        <span class="concept-emoji">📋</span>
+        <div class="concept-label">Interface</div>
+        <div class="concept-desc"><span class="ic" style="font-size: 12px;">implements</span> se kaam leta hai. Contract define karta hai, implementation nahi.</div>
+      </div>
+      <div class="concept-card purple">
+        <span class="concept-emoji">⚖️</span>
+        <div class="concept-label">Farq</div>
+        <div class="concept-desc">Class → amal ke liye. Interface → structure aur contract ke liye.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-logo">TypeScript Lecture</div>
+  <p style="margin: 8px 0 4px;">Roman Urdu mein mukammal lecture notes</p>
+  <p style="margin: 0; font-size: 12px;">Classes · Inheritance · Interfaces · OOP</p>
+  <div style="margin-top: 20px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+    <span class="badge blue">TypeScript</span>
+    <span class="badge green">OOP</span>
+    <span class="badge yellow">2 Ghante</span>
+    <span class="badge purple">Theory</span>
+  </div>
+</footer>
+
+<script>
+  // Scroll Reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Animated hero elements already have CSS animations
+  // Add stagger to objectives on load
+  document.querySelectorAll('.obj-item').forEach((el, i) => {
+    el.style.animationDelay = `${0.4 + i * 0.1}s`;
+    el.style.animation = 'fadeInUp 0.6s ease forwards';
+    el.style.opacity = '0';
+  });
+</script>
+</body>
+</html>

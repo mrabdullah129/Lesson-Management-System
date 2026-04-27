@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEAN Stack Mastery | Interactive Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E293B',
+                        accent: '#3B82F6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        background: '#F8FAFC',
+                        card: '#FFFFFF',
+                        text: '#334155'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-nav {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .sidebar-link.active {
+            background: #0F172A;
+            border-left: 4px solid #3B82F6;
+            color: white;
+        }
+        .content-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .content-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+        .fade-in-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-open { transform: translateX(0); }
+            .mobile-menu-closed { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body class="bg-background text-text font-sans antialiased">
+
+    <!-- Header (Mobile Toggle) -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 h-16 glass-nav z-50 flex items-center justify-between px-6 text-white">
+        <div class="font-display font-bold text-xl tracking-tight">MEAN <span class="text-accent">Mastery</span></div>
+        <button id="menu-toggle" class="p-2 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </button>
+    </header>
+
+    <div class="flex min-h-screen pt-16 lg:pt-0">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 glass-nav text-slate-300 transition-transform duration-300 z-40 mobile-menu-closed lg:translate-x-0 lg:static lg:block flex-shrink-0 border-r border-slate-700/50">
+            <div class="p-8 hidden lg:block">
+                <div class="font-display font-bold text-2xl text-white tracking-tight">MEAN <span class="text-accent">Mastery</span></div>
+                <p class="text-xs mt-1 text-slate-400 uppercase tracking-widest">Educational Portal</p>
+            </div>
+            <nav class="mt-4 px-3 space-y-1 overflow-y-auto max-h-[calc(100vh-10rem)]">
+                <a href="#mental-model" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">🧠</span> Mental Model
+                </a>
+                <a href="#rest-api" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">🔌</span> REST API Design
+                </a>
+                <a href="#backend" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">⚙️</span> Backend Build
+                </a>
+                <a href="#react-core" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">⚛️</span> React Core
+                </a>
+                <a href="#hooks" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">🎣</span> Lifecycle & Hooks
+                </a>
+                <a href="#vdom" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">⚡</span> Virtual DOM
+                </a>
+                <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-widest">Self-Assessment</div>
+                <a href="#quiz" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">📝</span> Quiz & Activities
+                </a>
+                <a href="#lab" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">💻</span> Lab & Homework
+                </a>
+                <a href="#revision" class="sidebar-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-all group">
+                    <span class="mr-3">🎓</span> Final Revision
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-grow w-full max-w-full overflow-x-hidden">
+            <div class="p-6 lg:p-12 max-w-6xl mx-auto space-y-16">
+                
+                <!-- Section: Mental Model -->
+                <section id="mental-model" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-accent/10 text-accent p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">MEAN Stack "End-to-End" Mental Model</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="content-card bg-white p-8 rounded-2xl border-l-4 border-accent shadow-sm">
+                            <h3 class="text-xl font-bold mb-4 text-primary">Explanation (Wazahat)</h3>
+                            <p class="leading-relaxed">
+                                MEAN stack aik full-stack pipeline hai jahan <span class="font-semibold text-accent">React UI</span> HTTP requests bhejti hai, 
+                                <span class="font-semibold text-accent">Express/Node</span> unko process karte hain, aur <span class="font-semibold text-accent">MongoDB</span> mein data store hota hai. 
+                                Yaad rakhen, client aur server separate hote hain; UI direct database se baat nahi karti, balkay <span class="italic">API</span> ke zariye communicate karti hai.
+                            </p>
+                        </div>
+                        <div class="content-card bg-blue-50/50 p-8 rounded-2xl border-l-4 border-accent shadow-sm">
+                            <h4 class="text-lg font-bold mb-3 flex items-center"><span class="mr-2">🚀</span> Request Flow</h4>
+                            <ul class="space-y-3 text-sm">
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">1</span> React action trigger hota hai</li>
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">2</span> API call (fetch/axios) jati hai</li>
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">3</span> Express request receive karta hai</li>
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">4</span> Mongoose DB query karta hai</li>
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">5</span> Server JSON response bhejta hai</li>
+                                <li class="flex items-start"><span class="bg-accent text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] mt-0.5 mr-2 flex-shrink-0">6</span> React UI update karta hai</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: REST API Design -->
+                <section id="rest-api" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-indigo-100 text-indigo-600 p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">REST API Design</h2>
+                    </div>
+
+                    <div class="content-card bg-white p-8 rounded-2xl border-l-4 border-indigo-500 shadow-sm">
+                        <p class="mb-6">REST endpoints resources (maslan tasks, users) ko represent karte hain. Hum HTTP methods use karte hain specific actions ke liye:</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b">
+                                        <th class="py-4 px-4 font-bold text-slate-700">Action</th>
+                                        <th class="py-4 px-4 font-bold text-slate-700">HTTP Method</th>
+                                        <th class="py-4 px-4 font-bold text-slate-700">Route</th>
+                                        <th class="py-4 px-4 font-bold text-slate-700">Status Code</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="py-4 px-4">Get All Tasks</td>
+                                        <td class="py-4 px-4 font-mono text-blue-600 font-bold">GET</td>
+                                        <td class="py-4 px-4 font-mono">/tasks</td>
+                                        <td class="py-4 px-4">200 OK</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="py-4 px-4">Create Task</td>
+                                        <td class="py-4 px-4 font-mono text-green-600 font-bold">POST</td>
+                                        <td class="py-4 px-4 font-mono">/tasks</td>
+                                        <td class="py-4 px-4">201 Created</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="py-4 px-4">Update Task</td>
+                                        <td class="py-4 px-4 font-mono text-amber-600 font-bold">PATCH/PUT</td>
+                                        <td class="py-4 px-4 font-mono">/tasks/:id</td>
+                                        <td class="py-4 px-4">200 OK</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="py-4 px-4">Delete Task</td>
+                                        <td class="py-4 px-4 font-mono text-red-600 font-bold">DELETE</td>
+                                        <td class="py-4 px-4 font-mono">/tasks/:id</td>
+                                        <td class="py-4 px-4">204 No Content</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Backend Live Build -->
+                <section id="backend" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-emerald-100 text-emerald-600 p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">Backend Live Build (Express + Mongoose)</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 content-card bg-white p-8 rounded-2xl border-l-4 border-emerald-500 shadow-sm">
+                            <h3 class="text-xl font-bold mb-4">Core Concepts</h3>
+                            <p class="mb-4">Express app routing handle karta hai, aur Mongoose JS objects ko MongoDB documents se map karta hai.</p>
+                            <div class="bg-slate-900 rounded-xl p-6 font-mono text-sm text-slate-300 overflow-x-auto">
+                                <p class="text-emerald-400 mb-2">// Essential Middleware</p>
+                                <p>app.use(express.json()); <span class="text-slate-500">// req.body parse karne ke liye</span></p>
+                                <p>app.use(cors()); <span class="text-slate-500">// Frontend access allow karne ke liye</span></p>
+                            </div>
+                        </div>
+                        <div class="content-card bg-emerald-50 p-8 rounded-2xl shadow-sm border border-emerald-100">
+                            <h4 class="font-bold text-emerald-800 mb-3 uppercase text-xs tracking-widest">Why CORS?</h4>
+                            <p class="text-sm text-emerald-900 leading-relaxed">
+                                React dev server (port 3000) aur API (port 5000) alag hote hain. CORS allow karta hai ke browser blocks na kare cross-origin requests ko.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: React Core Concepts -->
+                <section id="react-core" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-cyan-100 text-cyan-600 p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">React Core Concepts</h2>
+                    </div>
+
+                    <div class="content-card bg-white p-8 rounded-2xl border-l-4 border-cyan-500 shadow-sm">
+                        <h3 class="text-xl font-bold mb-6">Props vs State</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-2 text-cyan-600 font-bold">
+                                    <span>📦</span> <h4>Props</h4>
+                                </div>
+                                <ul class="text-sm space-y-2 list-disc list-inside text-slate-600">
+                                    <li>Parent-owned (Bahir se aata hai)</li>
+                                    <li>Read-only (Nahi badal sakte)</li>
+                                    <li>Data passing ke liye use hota hai</li>
+                                    <li>Functional approach</li>
+                                </ul>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-2 text-purple-600 font-bold">
+                                    <span>💾</span> <h4>State</h4>
+                                </div>
+                                <ul class="text-sm space-y-2 list-disc list-inside text-slate-600">
+                                    <li>Component-owned (Apna private data)</li>
+                                    <li>Mutable (Setter se change hota hai)</li>
+                                    <li>UI updates trigger karta hai</li>
+                                    <li>Dynamic behavior store karta hai</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Lifecycle via Hooks -->
+                <section id="hooks" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-violet-100 text-violet-600 p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">Lifecycle via Hooks</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="content-card bg-white p-8 rounded-2xl border-l-4 border-violet-500 shadow-sm">
+                            <h3 class="text-xl font-bold mb-4">useEffect Hook</h3>
+                            <p class="text-slate-600 leading-relaxed mb-4">
+                                Hooks ne puranay class methods ko replace kar dia hai. <code class="text-violet-600 bg-violet-50 px-1 rounded">useEffect</code> side effects handle karta hai (maslan API data fetching).
+                            </p>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <p class="text-xs font-bold text-slate-400 mb-2 uppercase">Pro Tip</p>
+                                <p class="text-sm italic">Dependency array <code class="font-bold">[]</code> ka sahi istemal zaroori hai warna <span class="text-red-500">infinite loop</span> ban sakta hai.</p>
+                            </div>
+                        </div>
+                        <div class="content-card bg-violet-900 p-8 rounded-2xl text-white shadow-xl">
+                            <h3 class="text-xl font-bold mb-4">Async Fetch Pattern</h3>
+                            <ol class="space-y-4 text-sm opacity-90">
+                                <li class="flex items-center"><span class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center mr-3">1</span> Set state to 'loading'</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center mr-3">2</span> Call API (await fetch)</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center mr-3">3</span> Update state with data</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center mr-3">4</span> Handle potential errors</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center mr-3">5</span> Set loading to 'false'</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Quiz -->
+                <section id="quiz" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-success/10 text-success p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">Quiz + Activities</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="content-card bg-white p-6 rounded-2xl border-l-4 border-success shadow-sm">
+                            <p class="font-semibold mb-4">1. React mein re-render kis cheez se trigger hota hai?</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button class="p-3 border rounded-xl hover:bg-slate-50 transition-all text-left text-sm">A) Direct variable change</button>
+                                <button onclick="this.classList.add('bg-success', 'text-white', 'border-success')" class="p-3 border rounded-xl hover:bg-slate-50 transition-all text-left text-sm">B) State update</button>
+                                <button class="p-3 border rounded-xl hover:bg-slate-50 transition-all text-left text-sm">C) API data arrival</button>
+                                <button class="p-3 border rounded-xl hover:bg-slate-50 transition-all text-left text-sm">D) Page scroll</button>
+                            </div>
+                        </div>
+
+                        <div class="content-card bg-amber-50 p-8 rounded-2xl border border-amber-200">
+                            <h3 class="text-amber-800 font-bold mb-4 flex items-center">
+                                <span class="mr-2">⚡</span> Activity 2: Fix the Bug
+                            </h3>
+                            <p class="text-amber-900 text-sm mb-4">Backend route mein <code>req.body</code> undefined aa raha hai. Kya cheez miss horahi hai?</p>
+                            <div class="bg-amber-100 p-4 rounded-lg font-mono text-xs text-amber-900 mb-4 italic">
+                                app.post('/tasks', (req, res) => { console.log(req.body); });
+                            </div>
+                            <button class="bg-amber-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-amber-700 transition-all">Check Solution</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Lab -->
+                <section id="lab" class="fade-in-section space-y-6 scroll-mt-24">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-blue-600 text-white p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">Homework + Lab</h2>
+                    </div>
+
+                    <div class="content-card bg-white p-8 rounded-2xl border-t-8 border-blue-600 shadow-xl">
+                        <h3 class="text-2xl font-bold mb-2">Project: Complete Task Manager</h3>
+                        <p class="text-slate-500 mb-8 italic text-sm">Build a full-featured MEAN-style application.</p>
+                        
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <div class="bg-success/20 text-success rounded-full p-1 h-6 w-6 flex items-center justify-center flex-shrink-0 mt-1">✓</div>
+                                <div>
+                                    <h4 class="font-bold">Step 1: Backend Base</h4>
+                                    <p class="text-sm text-slate-600">Express server banayen aur MongoDB se connect karen using Mongoose.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="bg-success/20 text-success rounded-full p-1 h-6 w-6 flex items-center justify-center flex-shrink-0 mt-1">✓</div>
+                                <div>
+                                    <h4 class="font-bold">Step 2: Schema Design</h4>
+                                    <p class="text-sm text-slate-600">Task model banayen jis mein 'title' aur 'done' properties hon.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="bg-success/20 text-success rounded-full p-1 h-6 w-6 flex items-center justify-center flex-shrink-0 mt-1">✓</div>
+                                <div>
+                                    <h4 class="font-bold">Step 3: Frontend Integration</h4>
+                                    <p class="text-sm text-slate-600">React mein Components banayen (TaskForm, TaskList) aur props pass karen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Final Revision -->
+                <section id="revision" class="fade-in-section space-y-6 scroll-mt-24 pb-20">
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-slate-800 text-white p-3 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </span>
+                        <h2 class="text-3xl font-display font-bold text-primary">Final Revision</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="content-card bg-slate-100 p-6 rounded-xl">
+                            <h4 class="font-bold border-b pb-2 mb-3">Core Recap</h4>
+                            <ul class="text-xs space-y-2 text-slate-700">
+                                <li>• MEAN relies on REST for communication.</li>
+                                <li>• Props are top-down flow.</li>
+                                <li>• State is local and reactive.</li>
+                            </ul>
+                        </div>
+                        <div class="content-card bg-slate-100 p-6 rounded-xl">
+                            <h4 class="font-bold border-b pb-2 mb-3">Viva Questions</h4>
+                            <ul class="text-xs space-y-2 text-slate-700">
+                                <li>• Why is CORS needed in React+Express?</li>
+                                <li>• Key prop in lists ka kya faida hai?</li>
+                                <li>• Virtual DOM faster kyun hai?</li>
+                            </ul>
+                        </div>
+                        <div class="content-card bg-slate-800 p-6 rounded-xl text-white">
+                            <h4 class="font-bold border-b border-slate-700 pb-2 mb-3 text-accent">Key Takeaway</h4>
+                            <p class="text-xs leading-relaxed opacity-80">Full stack development integration ka naam hai. Frontend components ko backend API se connect karna seekh liya to aap builder hain.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('mobile-menu-closed');
+            sidebar.classList.toggle('mobile-menu-open');
+        });
+
+        // Close sidebar on link click (mobile)
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.add('mobile-menu-closed');
+                    sidebar.classList.remove('mobile-menu-open');
+                }
+                
+                // Set active state
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Highlight active link on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('section');
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

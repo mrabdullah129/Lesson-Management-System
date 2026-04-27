@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express.js: Middleware, Routing, and Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            scroll-behavior: smooth;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .quiz-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .answer-reveal {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .reveal-active .answer-reveal {
+            max-height: 200px;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .step-number {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        }
+    </style>
+</head>
+<body class="font-body text-slate-800 leading-relaxed">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-card border-b border-slate-200">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="font-display font-bold text-xl md:text-2xl gradient-text">Express.js Masterclass</h1>
+            <div class="hidden md:flex space-x-6 text-sm font-medium text-slate-500">
+                <a href="#concepts" class="hover:text-brand-600 transition-colors">Concepts</a>
+                <a href="#middleware" class="hover:text-brand-600 transition-colors">Middleware</a>
+                <a href="#routing" class="hover:text-brand-600 transition-colors">Routing</a>
+                <a href="#quiz" class="bg-brand-600 text-white px-4 py-2 rounded-full hover:bg-brand-700 transition-all">Take Quiz</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-32 pb-20 px-6 max-w-4xl mx-auto">
+        
+        <!-- Hero Section -->
+        <section class="mb-20 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold uppercase tracking-wider mb-4">2 Hour Intensive</span>
+            <h2 class="font-display text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">Middleware, Routing, and Architecture</h2>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">Master the core building blocks of Node.js backend development with the Express.js framework.</p>
+        </section>
+
+        <!-- Analogy Callout -->
+        <div class="mb-16 p-8 rounded-3xl bg-brand-900 text-white relative overflow-hidden group">
+            <div class="relative z-10">
+                <h3 class="font-display text-xl font-bold mb-3 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    The Restaurant Analogy
+                </h3>
+                <p class="text-brand-100 opacity-90 leading-relaxed">
+                    Think of Express as a professional kitchen. The <strong>Request</strong> is the customer's order. <strong>Middleware</strong> are the stations (cleaning the produce, chopping, seasoning) the order passes through before the <strong>Route Handler</strong> (the Chef) finally cooks the meal and sends the <strong>Response</strong> back to the table.
+                </p>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+        </div>
+
+        <!-- Section 1: Overview -->
+        <section id="concepts" class="mb-24 scroll-mt-32">
+            <div class="flex items-center mb-8">
+                <span class="step-number w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold mr-4">01</span>
+                <h2 class="font-display text-3xl font-bold text-slate-900">Framework Concepts</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="p-6 rounded-2xl border border-slate-200 bg-white hover:border-brand-500 transition-colors">
+                    <h4 class="font-bold text-slate-900 mb-2">Minimalist & Fast</h4>
+                    <p class="text-slate-600 text-sm">Provides essential features without forcing a specific structure, leveraging Node's non-blocking I/O.</p>
+                </div>
+                <div class="p-6 rounded-2xl border border-slate-200 bg-white hover:border-brand-500 transition-colors">
+                    <h4 class="font-bold text-slate-900 mb-2">Unopinionated</h4>
+                    <p class="text-slate-600 text-sm">You decide how to organize your code. No strict folder structures required out of the box.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Middleware -->
+        <section id="middleware" class="mb-24 scroll-mt-32">
+            <div class="flex items-center mb-8">
+                <span class="step-number w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold mr-4">02</span>
+                <h2 class="font-display text-3xl font-bold text-slate-900">The Power of Middleware</h2>
+            </div>
+
+            <div class="prose prose-slate max-w-none mb-10">
+                <p class="text-slate-600 text-lg">Middleware functions are the "checkpoints" of your application. They have access to <code>req</code>, <code>res</code>, and <code>next</code>.</p>
+            </div>
+
+            <div class="space-y-4 mb-12">
+                <div class="p-4 rounded-xl bg-white border-l-4 border-brand-500 shadow-sm">
+                    <span class="text-xs font-bold text-brand-600 uppercase">Application-level</span>
+                    <p class="text-slate-700 mt-1">Bound to <code>app.use()</code>. Runs for all requests.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-white border-l-4 border-slate-400 shadow-sm opacity-80">
+                    <span class="text-xs font-bold text-slate-600 uppercase">Router-level</span>
+                    <p class="text-slate-700 mt-1">Bound to an <code>express.Router()</code> instance.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-white border-l-4 border-red-500 shadow-sm">
+                    <span class="text-xs font-bold text-red-600 uppercase">Error-handling</span>
+                    <p class="text-slate-700 mt-1">Four arguments: <code>(err, req, res, next)</code>. Always at the end.</p>
+                </div>
+            </div>
+
+            <!-- Example Callout -->
+            <div class="bg-accent-50 rounded-2xl p-8 border border-accent-100">
+                <h4 class="flex items-center font-display font-bold text-accent-600 mb-4 uppercase tracking-tighter text-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.040L3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622l-.382-3.016z"/></svg>
+                    Real-life Example: Authentication
+                </h4>
+                <p class="text-slate-700">Imagine an <code>authenticateUser</code> function. It inspects the request header for a token. If valid, it says "Proceed" via <code>next()</code>. If invalid, it slams the door shut with a <code>401 Unauthorized</code> response before the request ever hits your sensitive database routes.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Routing -->
+        <section id="routing" class="mb-24 scroll-mt-32">
+            <div class="flex items-center mb-8">
+                <span class="step-number w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold mr-4">03</span>
+                <h2 class="font-display text-3xl font-bold text-slate-900">Intelligent Routing</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-slate-900 p-4 rounded-xl text-brand-500 font-mono text-sm">
+                    app.<span class="text-white font-bold">get</span>('/users', ...)
+                </div>
+                <div class="bg-slate-900 p-4 rounded-xl text-green-400 font-mono text-sm">
+                    app.<span class="text-white font-bold">post</span>('/users', ...)
+                </div>
+                <div class="bg-slate-900 p-4 rounded-xl text-orange-400 font-mono text-sm">
+                    app.<span class="text-white font-bold">put</span>('/:id', ...)
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                <h4 class="font-bold mb-4 flex items-center">
+                    <div class="w-2 h-2 rounded-full bg-brand-500 mr-2"></div>
+                    Route Parameters
+                </h4>
+                <p class="text-slate-600 text-sm mb-4">Captured in <code>req.params</code>. Essential for dynamic resources.</p>
+                <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-brand-700">
+                    /users/:userId/books/:bookId <br/>
+                    <span class="text-slate-400">→ { userId: "123", bookId: "456" }</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Architecture -->
+        <section id="architecture" class="mb-24">
+            <div class="flex items-center mb-8">
+                <span class="step-number w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold mr-4">04</span>
+                <h2 class="font-display text-3xl font-bold text-slate-900">Modern Architecture</h2>
+            </div>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-3xl p-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold text-brand-900 mb-4">The Standard Pattern</h4>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="font-mono text-brand-600 font-bold mr-3">app.js</span>
+                                <span class="text-sm text-slate-600">The entry point. Mounts routers and global middleware.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="font-mono text-brand-600 font-bold mr-3">routes/</span>
+                                <span class="text-sm text-slate-600">Resource-specific route definitions using express.Router().</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="font-mono text-brand-600 font-bold mr-3">controllers/</span>
+                                <span class="text-sm text-slate-600">The "brains". Contains the logic for handling requests.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-inner border border-slate-200">
+                        <div class="text-xs font-mono text-slate-400 space-y-1">
+                            <div>📂 project-root</div>
+                            <div class="pl-4">├── 📄 app.js</div>
+                            <div class="pl-4">├── 📂 routes/</div>
+                            <div class="pl-8 text-brand-600">├── users.js</div>
+                            <div class="pl-8 text-brand-600">└── products.js</div>
+                            <div class="pl-4">├── 📂 controllers/</div>
+                            <div class="pl-4">├── 📂 models/</div>
+                            <div class="pl-4">└── 📂 middleware/</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Quiz -->
+        <section id="quiz" class="mb-24 scroll-mt-32">
+            <div class="text-center mb-12">
+                <h2 class="font-display text-4xl font-bold text-slate-900 mb-4">Check for Understanding</h2>
+                <p class="text-slate-500">Test your knowledge of Express.js core principles.</p>
+            </div>
+
+            <div class="grid gap-6">
+                <!-- Quiz Item 1 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 1</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Middleware functions in Express.js always have access to the req, res, and next objects.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mr-3">TRUE</span>
+                            <span class="text-sm text-slate-600 italic">This is their defining signature.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 2 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 2</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">app.use(express.json()) is an example of third-party middleware.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold mr-3">FALSE</span>
+                            <span class="text-sm text-slate-600 italic">It's a built-in middleware provided by Express.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 3 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 3</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Error-handling middleware functions are distinguished by having four arguments.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mr-3">TRUE</span>
+                            <span class="text-sm text-slate-600 italic">The four arguments are (err, req, res, next).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 4 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 4</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Route parameters in Express.js are accessed via req.query.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold mr-3">FALSE</span>
+                            <span class="text-sm text-slate-600 italic">Parameters are in req.params; req.query is for URL search strings.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 5 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 5</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">express.Router() is primarily used for modular routing.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mr-3">TRUE</span>
+                            <span class="text-sm text-slate-600 italic">It allows you to split routes into multiple files.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 6 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 6</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">A single Express.js route can only have one handler function.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold mr-3">FALSE</span>
+                            <span class="text-sm text-slate-600 italic">You can chain multiple handlers and middleware.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 7 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 7</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Mounting a router using app.use('/admin', adminRouter) prefixes paths with /admin.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mr-3">TRUE</span>
+                            <span class="text-sm text-slate-600 italic">This is how mounting works in Express.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 8 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 8</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Middleware can modify the req and res objects.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mr-3">TRUE</span>
+                            <span class="text-sm text-slate-600 italic">This is a primary use case (e.g., adding user info to req).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 9 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 9</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">The next() function terminates the request-response cycle.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold mr-3">FALSE</span>
+                            <span class="text-sm text-slate-600 italic">It passes control to the next function; res.send() terminates it.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Item 10 -->
+                <div class="quiz-card glass-card p-6 rounded-2xl hover:shadow-lg cursor-pointer group" onclick="this.classList.toggle('reveal-active')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-brand-500 uppercase">Question 10</span>
+                        <span class="text-xs text-slate-400 group-hover:text-brand-500 transition-colors">Click to reveal answer</span>
+                    </div>
+                    <p class="font-medium text-slate-800 mb-4">Express.js is an opinionated framework that dictates a strict structure.</p>
+                    <div class="answer-reveal">
+                        <div class="pt-4 border-t border-slate-100 flex items-center">
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold mr-3">FALSE</span>
+                            <span class="text-sm text-slate-600 italic">Express is famously unopinionated and flexible.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section class="text-center py-12 border-t border-slate-200">
+            <h3 class="font-display text-2xl font-bold text-slate-900 mb-4">Ready to Build?</h3>
+            <p class="text-slate-600 mb-8 max-w-xl mx-auto">You've covered the core pillars: Middleware, Routing, and Architecture. These concepts will allow you to build clean, maintainable, and scalable backend applications.</p>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="inline-flex items-center text-brand-600 font-bold hover:text-brand-700 transition-colors">
+                Back to Top
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        // Simple reveal animation observer for sections
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
+

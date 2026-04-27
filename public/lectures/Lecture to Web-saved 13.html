@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC337: Advanced Web Technologies - React Masterclass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f4ff',
+                            100: '#d9e2ff',
+                            200: '#bbcbff',
+                            500: '#4f46e5', // Indigo
+                            600: '#4338ca',
+                            700: '#3730a3',
+                            900: '#1e1b4b',
+                        },
+                        accent: {
+                            400: '#38bdf8', // Sky
+                            500: '#0ea5e9',
+                        },
+                        surface: '#ffffff',
+                        dark: '#0f172a',
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .neo-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-active {
+            color: #4f46e5;
+            background: rgba(79, 70, 229, 0.1);
+            border-right: 4px solid #4f46e5;
+        }
+
+        .scroll-mt-header {
+            scroll-margin-top: 100px;
+        }
+
+        .roman-urdu {
+            line-height: 1.8;
+            letter-spacing: 0.01em;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-body text-slate-800">
+
+    <!-- Sticky Top Bar -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-primary-600 p-2 rounded-lg text-white font-bold animate-float">⚛️</div>
+                <div>
+                    <h1 class="text-lg font-display font-bold text-primary-900 leading-tight">CSC337: React JS</h1>
+                    <p class="text-xs text-slate-500 font-medium tracking-wide">ADVANCED WEB TECHNOLOGIES</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="https://muhammadabdullahwali.vercel.app/" target="_blank" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Lecture Designed by Muhammad Abdullah
+                </a>
+                <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden p-2 text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- Sidebar Navigation -->
+            <aside id="sidebar" class="hidden lg:block lg:w-64 lg:fixed lg:h-[calc(100vh-120px)] overflow-y-auto">
+                <nav class="space-y-1">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-4 px-4">Lecture Roadmap</p>
+                    <a href="#roadmap" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">01</span> Roadmap
+                    </a>
+                    <a href="#topic1" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">02</span> The "Why"
+                    </a>
+                    <a href="#topic2" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">03</span> JSX Mastering
+                    </a>
+                    <a href="#topic3" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">04</span> Structure
+                    </a>
+                    <a href="#topic4" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">05</span> Props & State
+                    </a>
+                    <a href="#topic5" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">06</span> Routing
+                    </a>
+                    <a href="#topic6" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">07</span> Forms
+                    </a>
+                    <a href="#topic7" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        <span class="mr-3 text-slate-400 group-hover:text-primary-500">08</span> Hooks Pack
+                    </a>
+                    <div class="pt-4 mt-4 border-t border-slate-200"></div>
+                    <a href="#activities" class="group flex items-center px-4 py-3 text-sm font-bold text-primary-600 rounded-xl transition-all duration-200 bg-primary-50">
+                        ⚡ Activities
+                    </a>
+                    <a href="#quiz" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        📝 Knowledge Check
+                    </a>
+                    <a href="#homework" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-white hover:neo-shadow">
+                        🏠 Homework
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Mobile Navbar (Overlay) -->
+            <div id="mobile-nav" class="fixed inset-0 z-40 bg-white transform translate-x-full transition-transform duration-300 lg:hidden overflow-y-auto">
+                <div class="p-8 space-y-4 pt-20">
+                    <!-- Links cloned here dynamically or repeated -->
+                    <a href="#roadmap" onclick="toggleMobileNav()" class="block text-xl font-bold py-2 border-b">Roadmap</a>
+                    <a href="#topic1" onclick="toggleMobileNav()" class="block text-xl font-bold py-2 border-b">The Why</a>
+                    <a href="#topic2" onclick="toggleMobileNav()" class="block text-xl font-bold py-2 border-b">JSX</a>
+                    <a href="#activities" onclick="toggleMobileNav()" class="block text-xl font-bold py-2 border-b text-primary-600">Activities</a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="lg:ml-72 flex-1 space-y-12">
+                
+                <!-- Hero Section -->
+                <section class="animate-fade-in-up">
+                    <div class="bg-gradient-to-br from-primary-900 to-primary-700 rounded-3xl p-8 md:p-12 text-white neo-shadow relative overflow-hidden">
+                        <div class="relative z-10">
+                            <span class="inline-block px-3 py-1 bg-primary-500/30 rounded-full text-xs font-bold tracking-wider uppercase mb-4 border border-primary-400/30">Module 04</span>
+                            <h2 class="text-4xl md:text-5xl font-display font-bold mb-6">Mastering React Ecosystem</h2>
+                            <p class="text-primary-100 text-lg max-w-2xl leading-relaxed">Aaj hum React ki basics se lekar functional powerups (Hooks) aur routing tak ka safar tay karein ge. Tayyar ho jayein!</p>
+                            <div class="mt-8 flex flex-wrap gap-4">
+                                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                                    <span class="text-accent-400">⏱️</span> <span>2 Hours Intensive</span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                                    <span class="text-accent-400">🚀</span> <span>Hands-on Lab</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Decorative circle -->
+                        <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl"></div>
+                    </div>
+                </section>
+
+                <!-- Roadmap Table -->
+                <section id="roadmap" class="scroll-mt-header">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="h-8 w-1 bg-primary-500 rounded-full"></div>
+                        <h3 class="text-2xl font-display font-bold">Lecture At-a-Glance</h3>
+                    </div>
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 neo-shadow">
+                        <table class="w-full text-left bg-white border-collapse">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Time Slot</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Focus Area</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Student Result</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">0–10 min</td>
+                                    <td class="px-6 py-4 font-medium">Warm-up & Mental Model</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Recall component-based thinking</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">10–30 min</td>
+                                    <td class="px-6 py-4 font-medium">JSX Essentials & Mini Demo</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Write valid JSX confidently</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">30–50 min</td>
+                                    <td class="px-6 py-4 font-medium">Starter App (Vite) Setup</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Run a starter React app</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">50–70 min</td>
+                                    <td class="px-6 py-4 font-medium">Components, Props & State</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Build reusable UI components</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">70–85 min</td>
+                                    <td class="px-6 py-4 font-medium">React Router Practice</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Add multi-page navigation</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">85–105 min</td>
+                                    <td class="px-6 py-4 font-medium">Controlled vs Uncontrolled</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Implement both form types</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-mono text-primary-600 font-bold">105–115 min</td>
+                                    <td class="px-6 py-4 font-medium">Hooks Crash Pack</td>
+                                    <td class="px-6 py-4 text-slate-600 italic">Know when to use which hook</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Topic 1 -->
+                <section id="topic1" class="scroll-mt-header">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-8 rounded-2xl neo-shadow border-t-4 border-primary-500">
+                            <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+                                <span class="bg-primary-100 text-primary-600 p-1 rounded-md text-sm">01</span>
+                                Why React? & Roadmap
+                            </h4>
+                            <p class="roman-urdu text-slate-600 mb-4">
+                                React UI building ko components mein divide karta hai. Jab bhi data (state) change hota hai, React automatically UI ko update kar deta hai efficiently. Apps ek "component tree" ki tarah hoti hain jahan data upar se niche (props) jata hai aur events niche se upar (callbacks).
+                            </p>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 italic text-slate-500 text-sm">
+                                "React = Components + State + Virtual DOM"
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl neo-shadow flex flex-col justify-center">
+                            <h5 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Real World Example</h5>
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-4 p-4 rounded-xl bg-primary-50">
+                                    <div class="bg-white p-2 rounded-lg shadow-sm">📸</div>
+                                    <p class="text-sm font-medium text-primary-900">Instagram Feed: Har post ek alag component hai. Like karne par sirf us component ki state update hoti hai.</p>
+                                </div>
+                                <div class="flex items-start gap-4 p-4 rounded-xl bg-accent-50">
+                                    <div class="bg-white p-2 rounded-lg shadow-sm">🛒</div>
+                                    <p class="text-sm font-medium text-slate-800">E-commerce: Product cards repeated patterns hain jo different props ke sath reuse hote hain.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Topic 2: JSX -->
+                <section id="topic2" class="scroll-mt-header space-y-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-1 bg-primary-500 rounded-full"></div>
+                        <h3 class="text-2xl font-display font-bold">JSX (React Language) Done Right</h3>
+                    </div>
+                    
+                    <!-- JSX Rules Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-primary-300 transition-all group">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-4 text-primary-600 font-bold group-hover:scale-110 transition-transform">1</div>
+                            <p class="font-bold text-slate-800 mb-2">Single Parent</p>
+                            <p class="text-xs text-slate-500">Hamesha ek <code>&lt;div&gt;</code> ya <code>&lt;&gt;</code> (Fragment) mein wrap karein.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-primary-300 transition-all group">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-4 text-primary-600 font-bold group-hover:scale-110 transition-transform">2</div>
+                            <p class="font-bold text-slate-800 mb-2">Class Name</p>
+                            <p class="text-xs text-slate-500">HTML wala 'class' nahi, <code>className</code> use hota hai.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-primary-300 transition-all group">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-4 text-primary-600 font-bold group-hover:scale-110 transition-transform">3</div>
+                            <p class="font-bold text-slate-800 mb-2">JS Expressions</p>
+                            <p class="text-xs text-slate-500">Variables aur logic curly braces <code>{ }</code> mein likhein.</p>
+                        </div>
+                    </div>
+
+                    <!-- JSX Comparison Table -->
+                    <div class="bg-white rounded-2xl neo-shadow overflow-hidden border border-slate-200">
+                        <div class="bg-slate-900 px-6 py-3">
+                            <h5 class="text-white text-sm font-bold flex items-center gap-2">
+                                <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                HTML vs JSX Comparison
+                            </h5>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left">Feature</th>
+                                        <th class="px-6 py-4 text-left">HTML</th>
+                                        <th class="px-6 py-4 text-left">JSX (React)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td class="px-6 py-4 font-bold text-slate-700">Styling Class</td>
+                                        <td class="px-6 py-4 font-mono text-xs">class="btn"</td>
+                                        <td class="px-6 py-4 font-mono text-xs text-primary-600">className="btn"</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 font-bold text-slate-700">Events</td>
+                                        <td class="px-6 py-4 font-mono text-xs">onclick="fn()"</td>
+                                        <td class="px-6 py-4 font-mono text-xs text-primary-600">onClick={fn}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 font-bold text-slate-700">Inline Styles</td>
+                                        <td class="px-6 py-4 font-mono text-xs">style="color:red"</td>
+                                        <td class="px-6 py-4 font-mono text-xs text-primary-600">style={{ color: 'red' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Topic 4: Components, Props, State -->
+                <section id="topic4" class="scroll-mt-header">
+                    <div class="bg-white rounded-3xl neo-shadow p-8 flex flex-col lg:flex-row gap-10">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-display font-bold mb-6">Components: Props vs State</h3>
+                            <div class="space-y-6">
+                                <div class="relative pl-8 border-l-2 border-primary-100">
+                                    <div class="absolute -left-2.5 top-0 w-5 h-5 bg-primary-500 rounded-full border-4 border-white"></div>
+                                    <h6 class="font-bold text-slate-800">Props (The Inputs)</h6>
+                                    <p class="roman-urdu text-slate-600 text-sm">Props "Read-only" hotay hain. Parent component child ko data pass karta hai (jaise function arguments). Child inhein change nahi kar sakta.</p>
+                                </div>
+                                <div class="relative pl-8 border-l-2 border-primary-100">
+                                    <div class="absolute -left-2.5 top-0 w-5 h-5 bg-accent-500 rounded-full border-4 border-white"></div>
+                                    <h6 class="font-bold text-slate-800">State (The Brain)</h6>
+                                    <p class="roman-urdu text-slate-600 text-sm">State component ki apni memory hoti hai. Jab ye change hoti hai (via <code>useState</code>), component dobara render hota hai.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 bg-slate-900 rounded-2xl p-6 font-mono text-sm text-blue-300 overflow-x-auto">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-slate-500">// Example Component</span>
+                                <div class="flex gap-1.5">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                            </div>
+                            <pre><code><span class="text-purple-400">function</span> <span class="text-yellow-400">ProductCard</span>({ <span class="text-orange-300">name</span>, <span class="text-orange-300">price</span> }) {
+  <span class="text-slate-500">// State to track "Liked" status</span>
+  <span class="text-purple-400">const</span> [liked, setLiked] = <span class="text-yellow-400">useState</span>(<span class="text-blue-400">false</span>);
+
+  <span class="text-purple-400">return</span> (
+    &lt;<span class="text-red-400">div</span>&gt;
+      &lt;<span class="text-red-400">h2</span>&gt;{name}&lt;/<span class="text-red-400">h2</span>&gt;
+      &lt;<span class="text-red-400">p</span>&gt;Price: {price}&lt;/<span class="text-red-400">p</span>&gt;
+      &lt;<span class="text-red-400">button</span> <span class="text-green-400">onClick</span>={() => <span class="text-yellow-400">setLiked</span>(!liked)}&gt;
+        {liked ? <span class="text-green-400">'❤️'</span> : <span class="text-green-400">'🤍'</span>}
+      &lt;/<span class="text-red-400">button</span>&gt;
+    &lt;/<span class="text-red-400">div</span>&gt;
+  );
+}</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Topic 6: Forms -->
+                <section id="topic6" class="scroll-mt-header">
+                    <div class="bg-indigo-900 rounded-3xl p-8 md:p-12 text-white neo-shadow">
+                        <div class="max-w-3xl">
+                            <h3 class="text-3xl font-display font-bold mb-6">Controlled vs Uncontrolled Forms</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-4">
+                                    <h5 class="text-accent-400 font-bold uppercase text-xs tracking-widest">Controlled</h5>
+                                    <p class="roman-urdu text-sm text-indigo-100">React state hi "Single Source of Truth" hai. Input ki har tabdeeli state update karti hai. Best for validation.</p>
+                                    <ul class="text-xs space-y-2 text-indigo-200">
+                                        <li>✅ Instant Feedback</li>
+                                        <li>✅ Complex Validation</li>
+                                        <li>❌ More Re-renders</li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-4">
+                                    <h5 class="text-accent-400 font-bold uppercase text-xs tracking-widest">Uncontrolled</h5>
+                                    <p class="roman-urdu text-sm text-indigo-100">Data DOM ke pas hota hai. Hum <code>useRef()</code> ke zariye value read karte hain. Best for simple forms.</p>
+                                    <ul class="text-xs space-y-2 text-indigo-200">
+                                        <li>✅ Less Boilerplate</li>
+                                        <li>✅ Higher Performance</li>
+                                        <li>❌ No Instant Validation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Topic 7: Hooks Crash Pack -->
+                <section id="topic7" class="scroll-mt-header">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="h-8 w-1 bg-primary-500 rounded-full"></div>
+                        <h3 class="text-2xl font-display font-bold">Hooks Crash Pack (Functional Superpowers)</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- useState -->
+                        <div class="group p-1 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-3xl transition-transform hover:-translate-y-1">
+                            <div class="bg-white rounded-[22px] p-6 h-full">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-blue-600 font-bold font-mono">useState</span>
+                                    <span class="px-2 py-1 bg-blue-50 text-[10px] rounded text-blue-600 font-bold uppercase">Memory</span>
+                                </div>
+                                <p class="text-sm text-slate-600 mb-4">Functional component mein state handle karne ke liye. Jab state badalti hai, UI update hota hai.</p>
+                                <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-slate-500">
+                                    const [val, setVal] = useState(0);
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- useEffect -->
+                        <div class="group p-1 bg-gradient-to-br from-purple-400 to-pink-600 rounded-3xl transition-transform hover:-translate-y-1">
+                            <div class="bg-white rounded-[22px] p-6 h-full">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-purple-600 font-bold font-mono">useEffect</span>
+                                    <span class="px-2 py-1 bg-purple-50 text-[10px] rounded text-purple-600 font-bold uppercase">Effects</span>
+                                </div>
+                                <p class="text-sm text-slate-600 mb-4">Side-effects ke liye (API calls, timers). Empty dependency array <code>[]</code> ka matlab hai "Run only once".</p>
+                                <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-slate-500">
+                                    useEffect(() => { ... }, []);
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- useRef -->
+                        <div class="group p-1 bg-gradient-to-br from-green-400 to-emerald-600 rounded-3xl transition-transform hover:-translate-y-1">
+                            <div class="bg-white rounded-[22px] p-6 h-full">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-emerald-600 font-bold font-mono">useRef</span>
+                                    <span class="px-2 py-1 bg-emerald-50 text-[10px] rounded text-emerald-600 font-bold uppercase">DOM Access</span>
+                                </div>
+                                <p class="text-sm text-slate-600 mb-4">Direct DOM elements ko access karne ya values ko persist karne ke liye (bina re-render ke).</p>
+                                <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-slate-500">
+                                    const inputRef = useRef(null);
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- useContext -->
+                        <div class="group p-1 bg-gradient-to-br from-orange-400 to-red-600 rounded-3xl transition-transform hover:-translate-y-1">
+                            <div class="bg-white rounded-[22px] p-6 h-full">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-orange-600 font-bold font-mono">useContext</span>
+                                    <span class="px-2 py-1 bg-orange-50 text-[10px] rounded text-orange-600 font-bold uppercase">Global State</span>
+                                </div>
+                                <p class="text-sm text-slate-600 mb-4">"Prop Drilling" se bachne ke liye global state share karne ka tarika (jaise Theme ya User Auth).</p>
+                                <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-slate-500">
+                                    const theme = useContext(ThemeCtx);
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Activities -->
+                <section id="activities" class="scroll-mt-header">
+                    <div class="bg-white rounded-3xl neo-shadow overflow-hidden">
+                        <div class="bg-primary-600 p-8 text-white">
+                            <h3 class="text-3xl font-display font-bold">⚡ Live Coding & Activities</h3>
+                            <p class="text-primary-100 mt-2">Time to get your hands dirty with code!</p>
+                        </div>
+                        <div class="p-8 space-y-6">
+                            <!-- Activity 1 -->
+                            <div class="flex items-start gap-6 p-6 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-200">
+                                <div class="hidden sm:flex shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm items-center justify-center text-xl">🐛</div>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h6 class="font-bold text-slate-900">Activity 1: Spot the JSX Bug</h6>
+                                        <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-full font-bold">8 MINS</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 roman-urdu">6 short JSX snippets mein errors talash karein aur theek karein (Pair work). JSX rules ki practice.</p>
+                                </div>
+                            </div>
+                            <!-- Activity 2 -->
+                            <div class="flex items-start gap-6 p-6 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-200">
+                                <div class="hidden sm:flex shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm items-center justify-center text-xl">🏗️</div>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h6 class="font-bold text-slate-900">Activity 2: Build 3 Components Fast</h6>
+                                        <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-full font-bold">12 MINS</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 roman-urdu">Header, UserCard, aur Footer components banayein aur props pass kar ke unhein display karein.</p>
+                                </div>
+                            </div>
+                            <!-- Activity 3 -->
+                            <div class="flex items-start gap-6 p-6 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-200">
+                                <div class="hidden sm:flex shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm items-center justify-center text-xl">🗺️</div>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h6 class="font-bold text-slate-900">Activity 3: Routing Challenge</h6>
+                                        <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-full font-bold">15 MINS</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 roman-urdu">Home, About, Contact aur ek generic 404 page set-up karein using React Router.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quiz -->
+                <section id="quiz" class="scroll-mt-header">
+                    <div class="bg-slate-900 rounded-3xl p-8 md:p-12 text-white">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-2xl font-display font-bold">📝 Multiple Choice Questions</h3>
+                            <div class="px-4 py-1 border border-white/20 rounded-full text-xs font-mono">Quiz #04</div>
+                        </div>
+                        
+                        <div class="space-y-8">
+                            <div class="space-y-4">
+                                <p class="text-lg font-medium">1. JSX must return:</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">A) Multiple siblings</button>
+                                    <button onclick="checkAnswer(this, true)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">B) Exactly one root element</button>
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">C) Only <div> tags</button>
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">D) A string</button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <p class="text-lg font-medium">2. Controlled input requires:</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">A) Only value</button>
+                                    <button onclick="checkAnswer(this, true)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">B) value + onChange</button>
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">C) useRef only</button>
+                                    <button onclick="checkAnswer(this, false)" class="p-4 rounded-xl border border-white/10 text-left hover:bg-white/5 transition-colors">D) className</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Homework & Lab -->
+                <section id="homework" class="scroll-mt-header">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <!-- Homework Card -->
+                        <div class="bg-white p-8 rounded-3xl neo-shadow border-2 border-primary-100 flex flex-col">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 bg-primary-100 rounded-2xl flex items-center justify-center text-2xl">🏠</div>
+                                <h3 class="text-2xl font-display font-bold">Homework Assignment</h3>
+                            </div>
+                            <h4 class="font-bold text-slate-800 mb-2">Student Portal UI</h4>
+                            <p class="text-sm text-slate-600 mb-6">Objective: Practice JSX rules, props, and state management in a real layout.</p>
+                            
+                            <ul class="space-y-3 mb-8 flex-1">
+                                <li class="flex items-start gap-3 text-sm text-slate-700">
+                                    <span class="text-primary-500 font-bold mt-1">→</span>
+                                    <span>Create 4 components: <code>Navbar</code>, <code>StudentProfile</code>, <code>CourseList</code>, <code>Footer</code>.</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-sm text-slate-700">
+                                    <span class="text-primary-500 font-bold mt-1">→</span>
+                                    <span>Pass student info (name, regNo, semester) via props.</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-sm text-slate-700">
+                                    <span class="text-primary-500 font-bold mt-1">→</span>
+                                    <span>Add a state toggle: "Show/Hide Courses".</span>
+                                </li>
+                            </ul>
+                            
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-300">
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Submission Format</p>
+                                <p class="text-sm font-medium">ZIP file & GitHub Repository Link</p>
+                            </div>
+                        </div>
+
+                        <!-- Lab Card -->
+                        <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-3xl neo-shadow text-white flex flex-col">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl">💻</div>
+                                <h3 class="text-2xl font-display font-bold">Lab Task (Mini Notes)</h3>
+                            </div>
+                            <p class="text-sm text-slate-300 mb-6 italic">Build a fully functional Single Page Application (SPA).</p>
+                            
+                            <div class="space-y-4 flex-1">
+                                <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p class="text-xs font-bold text-accent-400 mb-1">STEP 1</p>
+                                    <p class="text-sm">Two pages: <code>/</code> (Notes) & <code>/about</code> using React Router.</p>
+                                </div>
+                                <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p class="text-xs font-bold text-accent-400 mb-1">STEP 2</p>
+                                    <p class="text-sm">Implement Note creation with <code>useState</code> & persist with <code>useEffect</code> (localStorage).</p>
+                                </div>
+                                <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p class="text-xs font-bold text-accent-400 mb-1">STEP 3</p>
+                                    <p class="text-sm">Use <code>useRef</code> to auto-focus the input field after every note submission.</p>
+                                </div>
+                            </div>
+
+                            <button class="mt-8 w-full py-3 bg-accent-500 hover:bg-accent-600 transition-colors rounded-xl font-bold text-sm">Download Lab Starter Kit</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Final Recap -->
+                <section class="pb-12">
+                    <div class="bg-primary-50 rounded-3xl p-8 border border-primary-100">
+                        <h3 class="text-xl font-display font-bold text-primary-900 mb-6">🚀 Final Revision: 5 Key Takeaways</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="flex gap-4">
+                                <div class="text-primary-500 font-bold">01</div>
+                                <p class="text-sm text-slate-700">JSX is <strong>JS + UI syntax</strong>, not standard HTML.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="text-primary-500 font-bold">02</div>
+                                <p class="text-sm text-slate-700">Components organize and allow UI <strong>reusability</strong>.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="text-primary-500 font-bold">03</div>
+                                <p class="text-sm text-slate-700">Data (<strong>Props</strong>) flow down; Events flow up.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="text-primary-500 font-bold">04</div>
+                                <p class="text-sm text-slate-700"><strong>React Router</strong> enables SPA navigation without reloads.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="text-primary-500 font-bold">05</div>
+                                <p class="text-sm text-slate-700"><strong>Hooks</strong> empower functional components with state & logic.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Mobile Navigation Toggle
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobile-nav');
+            const icon = document.getElementById('menu-icon');
+            if (nav.classList.contains('translate-x-full')) {
+                nav.classList.remove('translate-x-full');
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+            } else {
+                nav.classList.add('translate-x-full');
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>';
+            }
+        }
+
+        // Simple Quiz Interaction
+        function checkAnswer(btn, isCorrect) {
+            // Remove existing colors from siblings
+            const container = btn.parentElement;
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.classList.remove('bg-green-600', 'bg-red-600', 'border-green-600', 'border-red-600');
+            });
+
+            if (isCorrect) {
+                btn.classList.add('bg-green-600', 'border-green-600');
+            } else {
+                btn.classList.add('bg-red-600', 'border-red-600');
+            }
+        }
+
+        // Active Link Highlight on Scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const scrollY = window.pageYOffset;
+
+            sections.forEach(current => {
+                const sectionHeight = current.offsetHeight;
+                const sectionTop = current.offsetTop - 120;
+                const sectionId = current.getAttribute('id');
+                const sidebarLink = document.querySelector(`#sidebar nav a[href*=${sectionId}]`);
+
+                if (sidebarLink) {
+                    if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                        sidebarLink.classList.add('sidebar-active');
+                    } else {
+                        sidebarLink.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+
+        // Add reveal animation to cards
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in-up');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.style.opacity = "0";
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

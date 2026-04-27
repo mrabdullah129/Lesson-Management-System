@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ur-Latn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JWT in REST APIs - Roman Urdu Lecture Notes</title>
+  <style>
+    :root {
+      --bg-1: #07111f;
+      --bg-2: #10233f;
+      --card: rgba(255, 255, 255, 0.09);
+      --card-strong: rgba(255, 255, 255, 0.14);
+      --text: #f8fbff;
+      --muted: #c8d5ea;
+      --accent: #65e4c4;
+      --accent-2: #8cb5ff;
+      --accent-3: #ffd166;
+      --danger: #ff8095;
+      --success: #82f0a4;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --radius: 28px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(101, 228, 196, 0.32), transparent 32%),
+        radial-gradient(circle at 85% 10%, rgba(140, 181, 255, 0.3), transparent 30%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      filter: blur(30px);
+      opacity: 0.18;
+      z-index: -2;
+      animation: floatBlob 14s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      background: var(--accent);
+      left: -140px;
+      bottom: 8%;
+    }
+
+    body::after {
+      background: var(--accent-2);
+      right: -140px;
+      bottom: 18%;
+      animation-delay: 2s;
+    }
+
+    @keyframes floatBlob {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-45px) scale(1.12); }
+    }
+
+    .page-wrap {
+      width: min(1180px, calc(100% - 34px));
+      margin: 0 auto;
+      padding: 34px 0 70px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 54px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 36px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+      box-shadow: var(--shadow);
+      animation: riseIn 0.9s ease both;
+    }
+
+    .hero::before {
+      content: "JWT";
+      position: absolute;
+      right: -18px;
+      top: -40px;
+      font-size: clamp(110px, 18vw, 240px);
+      font-weight: 900;
+      letter-spacing: -10px;
+      color: rgba(255, 255, 255, 0.05);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 16px;
+      border: 1px solid rgba(101, 228, 196, 0.38);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(101, 228, 196, 0.12);
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      max-width: 830px;
+      font-size: clamp(2.3rem, 6vw, 5.4rem);
+      line-height: 0.98;
+      letter-spacing: -3px;
+      margin-bottom: 22px;
+    }
+
+    .subtitle {
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 1.18rem;
+      margin-bottom: 28px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .meta-card,
+    .nav-card,
+    .section,
+    .mini-card,
+    .code-box,
+    .quiz-item {
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .meta-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      transition: transform 0.28s ease, background 0.28s ease, border-color 0.28s ease;
+    }
+
+    .meta-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(101, 228, 196, 0.5);
+    }
+
+    .meta-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 3px;
+    }
+
+    .meta-card strong {
+      font-size: 1.15rem;
+    }
+
+    .quick-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 26px 0;
+    }
+
+    .nav-card {
+      color: var(--text);
+      text-decoration: none;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      transition: all 0.25s ease;
+    }
+
+    .nav-card:hover {
+      transform: translateY(-6px);
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent), var(--accent-3));
+      box-shadow: 0 18px 38px rgba(101, 228, 196, 0.22);
+    }
+
+    .section {
+      position: relative;
+      margin-top: 28px;
+      padding: 34px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.22);
+      animation: fadeUp 0.8s ease both;
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    }
+
+    .section:hover {
+      transform: translateY(-4px);
+      border-color: rgba(140, 181, 255, 0.45);
+      background: var(--card-strong);
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(28px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      font-size: clamp(1.6rem, 3vw, 2.35rem);
+      line-height: 1.15;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      height: 48px;
+      padding: 0 12px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(101, 228, 196, 0.26), rgba(140, 181, 255, 0.23));
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    h3 {
+      color: var(--accent);
+      font-size: 1.28rem;
+      margin: 22px 0 10px;
+    }
+
+    p {
+      color: var(--muted);
+      margin: 8px 0;
+    }
+
+    ul,
+    ol {
+      margin: 12px 0 20px 24px;
+      color: var(--muted);
+    }
+
+    li {
+      margin: 8px 0;
+      padding-left: 4px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      margin-top: 14px;
+    }
+
+    .mini-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(7, 17, 31, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .mini-card:hover {
+      transform: translateY(-7px);
+      border-color: rgba(255, 209, 102, 0.5);
+    }
+
+    .mini-card h4 {
+      font-size: 1.08rem;
+      margin-bottom: 8px;
+      color: var(--accent-3);
+    }
+
+    .code-box {
+      position: relative;
+      overflow: auto;
+      margin: 12px 0 20px;
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(101, 228, 196, 0.18);
+      color: #e8fff7;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.98rem;
+      white-space: pre-wrap;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .code-box:hover {
+      border-color: rgba(101, 228, 196, 0.6);
+      box-shadow: 0 12px 34px rgba(101, 228, 196, 0.12);
+    }
+
+    .flow {
+      counter-reset: step;
+      display: grid;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .flow li {
+      list-style: none;
+      position: relative;
+      padding: 16px 18px 16px 66px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .flow li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #07111f;
+      font-weight: 900;
+      background: var(--accent);
+    }
+
+    .flow li:hover {
+      transform: translateX(8px);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .pill {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(140, 181, 255, 0.12);
+      border: 1px solid rgba(140, 181, 255, 0.25);
+      color: #dce8ff;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .pill:hover {
+      transform: scale(1.07);
+      background: rgba(140, 181, 255, 0.22);
+    }
+
+    .quote {
+      margin: 16px 0;
+      padding: 18px 20px;
+      border-left: 5px solid var(--accent-3);
+      background: rgba(255, 209, 102, 0.1);
+      border-radius: 18px;
+      color: #fff4cd;
+      font-weight: 650;
+    }
+
+    .good { color: var(--success); }
+    .bad { color: var(--danger); }
+
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 15px;
+    }
+
+    .quiz-item {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .quiz-item:hover {
+      transform: translateY(-6px) rotate(-0.5deg);
+      background: rgba(101, 228, 196, 0.12);
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 32px;
+      color: var(--muted);
+    }
+
+    .top-button {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 50px;
+      height: 50px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      text-decoration: none;
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent), var(--accent-3));
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s ease;
+      z-index: 10;
+    }
+
+    .top-button:hover {
+      transform: translateY(-7px) rotate(8deg);
+    }
+
+    @media (max-width: 700px) {
+      .page-wrap { width: min(100% - 22px, 1180px); padding-top: 16px; }
+      .hero { padding: 30px 22px; border-radius: 28px; }
+      .section { padding: 24px 18px; }
+      h1 { letter-spacing: -1px; }
+      .section-title { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body id="top">
+  <main class="page-wrap">
+    <header class="hero">
+      <div class="eyebrow">📘 Lecture Notes</div>
+      <h1>JWT in REST APIs</h1>
+      <p class="subtitle">JSON Web Tokens (JWT) ko REST APIs mein implement karne ke mukammal Roman Urdu lecture notes.</p>
+      <div class="meta-grid">
+        <div class="meta-card"><span>Duration</span><strong>2 Hours</strong></div>
+        <div class="meta-card"><span>Class Type</span><strong>Theory</strong></div>
+        <div class="meta-card"><span>Topic</span><strong>Implementing JSON Web Tokens (JWT) in REST APIs</strong></div>
+      </div>
+    </header>
+
+    <nav class="quick-nav" aria-label="Lecture navigation">
+      <a class="nav-card" href="#objectives">🧠 Learning Objectives</a>
+      <a class="nav-card" href="#intro">🕐 0-30 Minutes</a>
+      <a class="nav-card" href="#structure">🕑 30-60 Minutes</a>
+      <a class="nav-card" href="#flow">🕒 60-90 Minutes</a>
+      <a class="nav-card" href="#best-practices">🕓 90-120 Minutes</a>
+      <a class="nav-card" href="#references">📖 References & Notes</a>
+    </nav>
+
+    <section class="section" id="objectives">
+      <h2 class="section-title"><span class="badge">🧠</span> Learning Objectives</h2>
+      <p>Is lecture ke end tak students yeh kar sakenge:</p>
+      <ul>
+        <li>Samajh sakenge ke JWT kya hai aur yeh kyun use hota hai.</li>
+        <li>JWT ki structure explain kar sakenge.</li>
+        <li>Authentication vs authorization samajh sakenge.</li>
+        <li>Seekh sakenge ke JWT REST APIs mein kaise kaam karta hai.</li>
+        <li>JWT ke advantages aur limitations identify kar sakenge.</li>
+        <li>Implementation flow ko conceptually samajh sakenge.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="breakdown">
+      <h2 class="section-title"><span class="badge">⏱️</span> Lecture Breakdown</h2>
+      <div class="pill-row">
+        <span class="pill">0 - 30 Minutes: Authentication aur JWT ka introduction</span>
+        <span class="pill">30 - 60 Minutes: JWT ki structure</span>
+        <span class="pill">60 - 90 Minutes: REST APIs mein JWT ka flow</span>
+        <span class="pill">90 - 120 Minutes: Advantages, limitations aur best practices</span>
+      </div>
+    </section>
+
+    <section class="section" id="intro">
+      <h2 class="section-title"><span class="badge">🕐</span> 0 - 30 Minutes: Authentication aur JWT ka Introduction</h2>
+
+      <h3>🔑 Authentication kya hai?</h3>
+      <p>Authentication woh process hai jisme verify kiya jata hai ke user kaun hai.</p>
+      <div class="quote">👉 Example: Username aur password use karke Facebook mein login karna.</div>
+
+      <h3>🔐 Authorization kya hai?</h3>
+      <p>Authorization decide karta hai ke user kis cheez tak access kar sakta hai.</p>
+      <div class="grid-2">
+        <div class="mini-card"><h4>👉 Example</h4><p>Admin posts delete kar sakta hai.</p></div>
+        <div class="mini-card"><h4>👉 Example</h4><p>User sirf posts view kar sakta hai.</p></div>
+      </div>
+
+      <h3>🤔 Traditional Session-Based Authentication</h3>
+      <ul>
+        <li>Server session data store karta hai.</li>
+        <li>Cookies use hoti hain.</li>
+      </ul>
+      <div class="quote">👉 Problem: Large distributed systems ke liye scalable nahi hota.</div>
+
+      <h3>🌐 JWT (JSON Web Token) kya hai?</h3>
+      <p>JWT client aur server ke darmiyan information transmit karne ka compact aur secure tareeqa hai.</p>
+      <p>👉 Yeh hota hai:</p>
+      <div class="pill-row">
+        <span class="pill">Self-contained</span>
+        <span class="pill">Digitally signed</span>
+        <span class="pill">Stateless</span>
+      </div>
+
+      <h3>📦 Real-Life Analogy</h3>
+      <p>JWT ko movie ticket 🎟️ ki tarah sochain:</p>
+      <ul>
+        <li>Aap ticket dikhate hain → cinema mein enter karte hain.</li>
+        <li>Dobara poochne ki zaroorat nahi hoti.</li>
+      </ul>
+
+      <h3>🎯 REST APIs mein JWT kyun?</h3>
+      <p>REST APIs stateless hoti hain, is liye JWT madad karta hai:</p>
+      <ul>
+        <li>Server par session store karne se bachata hai.</li>
+        <li>Easily scale hota hai.</li>
+        <li>Multiple services ke across kaam karta hai.</li>
+      </ul>
+
+      <h3>🎓 Student Activity (5 mins)</h3>
+      <div class="quote">“Large apps mein server par sessions store karna problem kyun ban sakta hai?”</div>
+    </section>
+
+    <section class="section" id="structure">
+      <h2 class="section-title"><span class="badge">🕑</span> 30 - 60 Minutes: JWT ki Structure</h2>
+      <p>JWT ke 3 parts hotay hain:</p>
+      <div class="code-box">Header.Payload.Signature</div>
+
+      <h3>🧩 1. Header</h3>
+      <p>Is mein yeh cheezen hoti hain:</p>
+      <ul>
+        <li>Token type (JWT)</li>
+        <li>Algorithm used</li>
+      </ul>
+      <p>👉 Example:</p>
+      <div class="code-box">{
+  "alg": "HS256",
+  "typ": "JWT"
+}</div>
+
+      <h3>📄 2. Payload</h3>
+      <p>Is mein claims (data) hota hai:</p>
+      <ul>
+        <li>User ID</li>
+        <li>Role</li>
+        <li>Expiry time</li>
+      </ul>
+      <p>👉 Example:</p>
+      <div class="code-box">{
+  "userId": 101,
+  "role": "admin",
+  "exp": 1712345678
+}</div>
+
+      <h3>🔏 3. Signature</h3>
+      <p>Yeh ensure karta hai ke token tamper nahi hua.</p>
+      <p>👉 Yeh cheezen use karke create hota hai:</p>
+      <ul>
+        <li>Header</li>
+        <li>Payload</li>
+        <li>Secret key</li>
+      </ul>
+
+      <h3>🔍 Visual Understanding</h3>
+      <div class="code-box">JWT = Base64(Header) + "." + Base64(Payload) + "." + Signature</div>
+
+      <h3>🎯 Real-Life Example</h3>
+      <div class="grid-2">
+        <div class="mini-card"><h4>Header</h4><p>Ticket type</p></div>
+        <div class="mini-card"><h4>Payload</h4><p>Aap ka seat number</p></div>
+        <div class="mini-card"><h4>Signature</h4><p>Official stamp</p></div>
+      </div>
+
+      <h3>🎓 Student Activity (5-10 mins)</h3>
+      <p>Students ko sample JWT dein aur poochein:</p>
+      <div class="quote">Header, payload, signature identify karein.</div>
+    </section>
+
+    <section class="section" id="flow">
+      <h2 class="section-title"><span class="badge">🕒</span> 60 - 90 Minutes: REST APIs mein JWT kaise kaam karta hai</h2>
+
+      <h3>🔄 JWT Authentication Flow</h3>
+      <ol class="flow">
+        <li>User login karta hai.</li>
+        <li>Server credentials verify karta hai.</li>
+        <li>Server JWT generate karta hai.</li>
+        <li>Client token store karta hai.</li>
+        <li>Client requests mein token send karta hai.</li>
+        <li>Server token validate karta hai.</li>
+      </ol>
+
+      <h3>📡 Request Example</h3>
+      <div class="code-box">Authorization: Bearer &lt;token&gt;</div>
+
+      <h3>🧠 Step-by-Step Explanation</h3>
+      <div class="mini-card">
+        <h4>Step 1: Login</h4>
+        <p>User send karta hai:</p>
+        <div class="code-box">{
+  "username": "Ali",
+  "password": "1234"
+}</div>
+      </div>
+
+      <div class="mini-card">
+        <h4>Step 2: Token Generation</h4>
+        <p>Server return karta hai:</p>
+        <div class="code-box">{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</div>
+      </div>
+
+      <div class="mini-card">
+        <h4>Step 3: Client Stores Token</h4>
+        <p>LocalStorage / SessionStorage</p>
+      </div>
+
+      <div class="mini-card">
+        <h4>Step 4: Access Protected Routes</h4>
+        <p>Client send karta hai:</p>
+        <div class="code-box">Authorization: Bearer eyJhbGc...</div>
+      </div>
+
+      <div class="mini-card">
+        <h4>Step 5: Server Verifies Token</h4>
+        <ul>
+          <li>Signature check karta hai.</li>
+          <li>Expiry check karta hai.</li>
+        </ul>
+      </div>
+
+      <h3>📦 Real-Life Analogy</h3>
+      <p>JWT = University ID Card</p>
+      <ul>
+        <li>Card dikhayen → library mein enter karein.</li>
+        <li>Dobara verify karne ki zaroorat nahi hoti.</li>
+      </ul>
+
+      <h3>🎓 Student Activity (10 mins)</h3>
+      <p>Group discussion:</p>
+      <div class="quote">“Tokens kahan store hone chahiye? LocalStorage vs Cookies?”</div>
+    </section>
+
+    <section class="section" id="best-practices">
+      <h2 class="section-title"><span class="badge">🕓</span> 90 - 120 Minutes: Advantages, Limitations aur Best Practices</h2>
+
+      <h3 class="good">✅ JWT ke Advantages</h3>
+      <ul>
+        <li>Stateless (server storage nahi hoti)</li>
+        <li>Scalable</li>
+        <li>Fast authentication</li>
+        <li>Domains ke across kaam karta hai.</li>
+      </ul>
+
+      <h3 class="bad">❌ JWT ki Limitations</h3>
+      <ul>
+        <li>Token ko easily revoke nahi kiya ja sakta.</li>
+        <li>Token size large ho sakta hai.</li>
+        <li>Agar properly store na ho to security risks hotay hain.</li>
+      </ul>
+
+      <h3>⚠️ Security Best Practices</h3>
+      <div class="grid-2">
+        <div class="mini-card"><h4>🔒 1. HTTPS use karein</h4><p>Token theft prevent karein.</p></div>
+        <div class="mini-card"><h4>⏳ 2. Expiration Time use karein</h4><p>Tokens expire hone chahiye.</p></div>
+        <div class="mini-card"><h4>🔑 3. Strong Secret Key use karein</h4><p>Hacking prevent karein.</p></div>
+        <div class="mini-card"><h4>📦 4. Payload mein Sensitive Data store karne se bachein</h4><p>Payload readable hota hai.</p></div>
+        <div class="mini-card"><h4>🔄 5. Refresh Tokens use karein</h4><p>Long sessions ke liye.</p></div>
+      </div>
+
+      <h3>🎯 Quick Quiz (5-10 mins)</h3>
+      <p>Students se poochein:</p>
+      <div class="quiz-grid">
+        <div class="quiz-item">1. JWT ke 3 parts kya hain?</div>
+        <div class="quiz-item">2. JWT ko stateless kyun kaha jata hai?</div>
+        <div class="quiz-item">3. Payload mein kya store hota hai?</div>
+        <div class="quiz-item">4. Agar signature invalid ho to kya hota hai?</div>
+      </div>
+
+      <h3>📚 Summary</h3>
+      <ul>
+        <li>JWT REST APIs mein secure authentication ke liye use hota hai.</li>
+        <li>Yeh Header, Payload, Signature par consist karta hai.</li>
+        <li>Yeh stateless communication enable karta hai.</li>
+        <li>Isay security best practices ke saath implement karna zaroori hai.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="references">
+      <h2 class="section-title"><span class="badge">📖</span> References & Notes</h2>
+      <ul>
+        <li>JWT standard RFC 7519 mein defined hai.</li>
+        <li>Common libraries:</li>
+      </ul>
+      <div class="grid-2">
+        <div class="mini-card"><h4>Node.js</h4><p>jsonwebtoken</p></div>
+        <div class="mini-card"><h4>Python</h4><p>PyJWT</p></div>
+        <div class="mini-card"><h4>Java</h4><p>jjwt</p></div>
+      </div>
+      <div class="quote">👉 Note: External citation required nahi; concepts web security aur REST API design mein standard hain.</div>
+      <h3>Note</h3>
+      <ul>
+        <li>Board par JWT structure draw karein.</li>
+        <li>Students ke saath login flow simulate karein, jahan students client/server ki acting karein.</li>
+      </ul>
+    </section>
+
+    <p class="footer-note">Complete Roman Urdu version - redesigned with internal CSS, hover effects, and animations.</p>
+  </main>
+  <a class="top-button" href="#top" aria-label="Back to top">↑</a>
+</body>
+</html>

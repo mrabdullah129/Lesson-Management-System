@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Server Seekhain — CSC337</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #e63946;
+  --green: #06d6a0;
+  --blue: #118ab2;
+  --yellow: #ffd166;
+  --dark: #0d1117;
+  --darker: #080d13;
+  --card: #161b22;
+  --card2: #1e2530;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --sidebar-w: 270px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--darker);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  position: fixed; top:0; left:0; height:3px;
+  background: linear-gradient(90deg, var(--red), var(--accent), var(--yellow));
+  z-index: 9999; width:0%; transition: width 0.1s;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  position: fixed; top:0; left:0; bottom:0;
+  z-index: 200;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--yellow), #e6a800);
+  color: #111; font-size: 0.7rem; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 0.25rem 0.7rem; border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+.sidebar-logo h1 {
+  font-family: 'Baloo Bhaijaan 2', cursive;
+  font-size: 1.3rem; font-weight: 800;
+  background: linear-gradient(135deg, #fff, var(--yellow));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+.sidebar-logo p {
+  font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem;
+}
+
+.nav-section-label {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  padding: 1rem 1.2rem 0.3rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border-radius: 0; border-left: 3px solid transparent;
+  transition: all 0.2s;
+  text-decoration: none; color: var(--muted);
+  font-size: 0.88rem; font-weight: 600;
+}
+.nav-item:hover {
+  background: rgba(255,209,102,0.08);
+  color: var(--text);
+  border-left-color: var(--yellow);
+}
+.nav-item.active {
+  background: rgba(255,209,102,0.12);
+  color: var(--yellow);
+  border-left-color: var(--yellow);
+}
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink:0; }
+.nav-item .dot {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--border); margin-left:auto; flex-shrink:0;
+  transition: background 0.2s;
+}
+.nav-item.active .dot,
+.nav-item:hover .dot { background: var(--yellow); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--muted);
+  text-align: center;
+}
+
+/* ===== MOBILE TOGGLE ===== */
+.mob-toggle {
+  display: none;
+  position: fixed; top: 1rem; left: 1rem;
+  z-index: 500;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ===== STARS ===== */
+.stars {
+  position: fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.star {
+  position:absolute; border-radius:50%; background:white;
+  animation: twinkle var(--dur) infinite var(--delay) ease-in-out;
+}
+@keyframes twinkle {
+  0%,100%{opacity:.1;transform:scale(1)}
+  50%{opacity:.9;transform:scale(1.5)}
+}
+
+/* ===== HERO ===== */
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.hero-stats {
+  display:flex; gap:1.2rem; flex-wrap:wrap; justify-content:center;
+  animation: fadeUp 0.9s ease 0.6s both;
+}
+.stat {
+  background: var(--card); border:1px solid var(--border);
+  padding: 0.8rem 1.4rem; border-radius:12px; text-align:center;
+}
+.stat-num { font-size:1.8rem; font-weight:800; color:var(--yellow); font-family:'Baloo Bhaijaan 2',cursive; }
+.stat-label { font-size:0.75rem; color:var(--muted); }
+
+/* ===== SECTION WRAPPER ===== */
+.section {
+  position:relative; z-index:1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  scroll-margin-top: 1rem;
+}
+.section-tag {
+  display:inline-block;
+  font-size:0.7rem; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--yellow);
+  background: rgba(255,209,102,0.1);
+  padding: 0.25rem 0.7rem; border-radius:999px;
+  margin-bottom:0.7rem;
+}
+.section-title {
+  font-family:'Baloo Bhaijaan 2',cursive;
+  font-size: clamp(1.6rem,3.5vw,2.4rem);
+  font-weight:800; margin-bottom:0.5rem; line-height:1.2;
+}
+.section-desc { color:var(--muted); max-width:680px; line-height:1.7; margin-bottom:2rem; }
+
+hr.divider {
+  border:none; border-top:1px solid var(--border);
+  max-width:860px; margin:0 auto;
+}
+
+/* ===== GRID ===== */
+.grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+
+/* ===== CONCEPT CARD ===== */
+.ccard {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+  position:relative; overflow:hidden;
+  opacity:0; transform:translateY(24px);
+  transition: all 0.5s ease;
+}
+.ccard::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.ccard.red::before{background:var(--red)}
+.ccard.blue::before{background:var(--blue)}
+.ccard.green::before{background:var(--green)}
+.ccard.yellow::before{background:var(--yellow)}
+.ccard.accent::before{background:var(--accent)}
+.ccard.visible{opacity:1;transform:translateY(0)}
+.ccard:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.35);border-color:var(--yellow)}
+.ccard .ci{font-size:1.8rem;margin-bottom:.6rem}
+.ccard .ct{font-family:'Baloo Bhaijaan 2',cursive;font-size:1rem;font-weight:800;margin-bottom:.4rem}
+.ccard .cd{color:var(--muted);font-size:.88rem;line-height:1.6}
+
+/* ===== FLOW ===== */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;justify-content:center;margin:1.2rem 0}
+.fbox{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;padding:.55rem 1.1rem;
+  font-size:.88rem;font-weight:700;
+  transition:all .3s;
+}
+.fbox:hover{border-color:var(--yellow);color:var(--yellow);transform:scale(1.05)}
+.farr{color:var(--yellow);font-size:1.1rem}
+
+/* ===== CODE BLOCK ===== */
+.code-block{
+  background:#0d1117;border:1px solid var(--border);
+  border-radius:12px;padding:1.4rem;
+  font-family:'Courier New',monospace;font-size:.88rem;line-height:1.9;
+  overflow-x:auto;position:relative;
+}
+.code-block .lb{position:absolute;top:.7rem;right:.9rem;font-size:.68rem;color:var(--muted);background:var(--card2);padding:.15rem .5rem;border-radius:5px;font-family:'Nunito',sans-serif}
+.kw{color:#ff7b72}.str{color:#a5d6ff}.dec{color:#d2a8ff}.val{color:#79c0ff}.cm{color:#8b949e;font-style:italic}.tag{color:#7ee787}.attr{color:#ffa657}.fn{color:#e3b341}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--card2);padding:.85rem 1.1rem;text-align:left;font-size:.82rem;color:var(--yellow);font-weight:700;border-bottom:1px solid var(--border)}
+td{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);font-size:.86rem}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,209,102,.05)}
+.pill{display:inline-block;background:rgba(255,209,102,.15);color:var(--yellow);padding:.15rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem}
+
+/* ===== ALERT ===== */
+.alert{border-radius:12px;padding:1.1rem 1.3rem;margin:.8rem 0;border-left:4px solid;display:flex;gap:.7rem;align-items:flex-start}
+.alert-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.alert.warn{background:rgba(255,209,102,.1);border-color:var(--yellow);color:#ffd166}
+.alert.tip{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}
+.alert.exam{background:rgba(230,57,70,.1);border-color:var(--red);color:#ff8b94}
+.alert-body{font-size:.88rem;line-height:1.6}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+
+/* ===== STEPS ===== */
+.steps{display:flex;flex-direction:column;gap:1rem}
+.step{display:flex;gap:1rem;align-items:flex-start;opacity:0;transform:translateX(-15px);transition:all .5s}
+.step.visible{opacity:1;transform:translateX(0)}
+.snum{width:34px;height:34px;flex-shrink:0;background:linear-gradient(135deg,var(--yellow),#e6a800);color:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem}
+.stitle{font-weight:700;margin-bottom:.2rem}
+.sdesc{color:var(--muted);font-size:.88rem}
+.scode{display:inline-block;background:var(--darker);border:1px solid var(--border);padding:.18rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem;color:var(--yellow);margin-top:.35rem}
+
+/* ===== QUIZ ===== */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.3rem;margin-bottom:1rem;opacity:0;transform:translateY(18px);transition:all .5s}
+.quiz-card.visible{opacity:1;transform:translateY(0)}
+.quiz-q{font-family:'Baloo Bhaijaan 2',cursive;font-size:.98rem;font-weight:700;margin-bottom:.9rem}
+.qnum{color:var(--yellow);margin-right:.4rem}
+.options{display:flex;flex-direction:column;gap:.45rem}
+.option{padding:.6rem 1rem;border-radius:9px;border:1px solid var(--border);cursor:pointer;font-size:.88rem;transition:all .2s;background:var(--card2)}
+.option:hover{border-color:var(--yellow);background:rgba(255,209,102,.1)}
+.option.correct{background:rgba(6,214,160,.2);border-color:var(--green);color:var(--green)}
+.option.wrong{background:rgba(230,57,70,.15);border-color:var(--red);color:#ff8b94}
+.qresult{margin-top:.5rem;font-size:.83rem;font-weight:600;min-height:1rem}
+
+/* ===== FADE IN ===== */
+.fi{opacity:0;transform:translateY(22px);transition:all .6s ease}
+.fi.visible{opacity:1;transform:translateY(0)}
+
+/* ===== FOOTER ===== */
+footer{position:relative;z-index:1;text-align:center;padding:2.5rem 1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.88rem}
+footer strong{color:var(--yellow)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mob-toggle{display:flex}
+  .overlay.show{display:block}
+  .main{margin-left:0}
+  .section{padding:3rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="pb"></div>
+<div class="stars" id="stars"></div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">CSC337</div>
+    <h1>HTTP Server<br>Seekhain 🌐</h1>
+    <p>Advanced Web Technologies</p>
+  </div>
+
+  <div class="nav-section-label">Shuru karo</div>
+  <a class="nav-item active" href="#hero" onclick="setActive(this)">
+    <span class="icon">🏠</span> Home
+    <span class="dot"></span>
+  </a>
+
+  <div class="nav-section-label">Lecture Topics</div>
+  <a class="nav-item" href="#kyun" onclick="setActive(this)">
+    <span class="icon">🤔</span> Kyun HTTP Server?
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#architecture" onclick="setActive(this)">
+    <span class="icon">🗺️</span> Architecture
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#http" onclick="setActive(this)">
+    <span class="icon">🌐</span> HTTP Basics
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#url" onclick="setActive(this)">
+    <span class="icon">🔗</span> URL Module
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#routing" onclick="setActive(this)">
+    <span class="icon">🚦</span> Routing
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#fs" onclick="setActive(this)">
+    <span class="icon">📁</span> File System (FS)
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#streams" onclick="setActive(this)">
+    <span class="icon">🌊</span> Streams & Pipe
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#examples" onclick="setActive(this)">
+    <span class="icon">💡</span> Examples
+    <span class="dot"></span>
+  </a>
+
+  <div class="nav-section-label">Practice</div>
+  <a class="nav-item" href="#debugging" onclick="setActive(this)">
+    <span class="icon">🐛</span> Debugging
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#quiz" onclick="setActive(this)">
+    <span class="icon">🧠</span> Quiz
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#homework" onclick="setActive(this)">
+    <span class="icon">📝</span> Homework
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#recap" onclick="setActive(this)">
+    <span class="icon">🔑</span> Recap
+    <span class="dot"></span>
+  </a>
+
+  <div class="sidebar-footer">
+    🇵🇰 Pakistani Students ke liye<br>
+    <strong style="color:var(--yellow)">2 Ghante ka Lecture</strong>
+  </div>
+</aside>
+
+<!-- Mobile toggle -->
+<button class="mob-toggle" id="mobToggle" onclick="openSidebar()">☰</button>
+
+<!-- ========== MAIN ========== -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="section" id="hero" style="min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 0%,#2a1f00 0%,transparent 65%)">
+    <div style="animation:fadeUp .7s ease .1s both;display:inline-block;background:linear-gradient(135deg,var(--yellow),#e6a800);color:#111;font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:.3rem 1rem;border-radius:999px;margin-bottom:1.2rem">📚 Unit 2 — Lectures 5 & 6</div>
+    <h2 style="font-family:'Baloo Bhaijaan 2',cursive;font-size:clamp(2.2rem,6vw,4.2rem);font-weight:800;background:linear-gradient(135deg,#fff 0%,var(--yellow) 50%,var(--red) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:1rem;animation:fadeUp .9s ease .2s both">HTTP Server Seekhain! 🎓</h2>
+    <p style="color:var(--muted);max-width:520px;line-height:1.7;animation:fadeUp .9s ease .4s both;margin-bottom:2rem">HTTP Server banana, URL parse karna, aur File System (FS) use karna — sab kuch aasaan Roman Urdu mein! Pakistani students ke liye specially tayar ki gayi lecture!</p>
+    <div class="hero-stats" style="animation:fadeUp .9s ease .6s both">
+      <div class="stat"><div class="stat-num">2</div><div class="stat-label">Ghante</div></div>
+      <div class="stat"><div class="stat-num">6</div><div class="stat-label">Topics</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Code Examples</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Quiz MCQs</div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== KYUN ===== -->
+  <section class="section" id="kyun">
+    <div class="section-tag">Overview — 0 se 20 Minute</div>
+    <h2 class="section-title fi">HTTP Server Kyun Seekhein? 🤔</h2>
+    <p class="section-desc fi">Express jaisa framework use karne se pehle, seedha http module samajhna zaroori hai — taake real apps mein kuch bhi galat ho to fix kar sako!</p>
+    <div class="grid-2">
+      <div class="ccard yellow"><div class="ci">🌐</div><div class="ct">Framework ke Bina Server</div><div class="cd">Node.js ka http module seedha low-level server banata hai. Express ke andar bhi yehi hai — pehle ye samjho!</div></div>
+      <div class="ccard blue"><div class="ci">🔗</div><div class="ct">URL Parsing</div><div class="cd">Har request ke sath URL aata hai — pathname aur query parameters nikalne ke liye URL module use karte hain!</div></div>
+      <div class="ccard green"><div class="ci">📁</div><div class="ct">File System (FS)</div><div class="cd">Files padhna, likhna, aur stream karna — logs, uploads, static files — sab FS module se hota hai!</div></div>
+      <div class="ccard red"><div class="ci">🌊</div><div class="ct">Streams — Memory Bachao</div><div class="cd">Badi files seedha RAM mein load mat karo — Streams se chunks mein process karo. pipe() magic hai!</div></div>
+    </div>
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Ek Line Summary</strong>Node.js = HTTP server + URL parsing + FS + Streams — ye charon mil ke ek complete web server banate hain! Ye yaad karo!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-tag">Big Picture</div>
+    <h2 class="section-title fi">Poora System Kaise Kaam Karta Hai 🗺️</h2>
+    <p class="section-desc fi">Browser se request aati hai, Node usse pakad ke handle karta hai — neeche dekho sab kaise connected hai!</p>
+    <div class="flow fi">
+      <div class="fbox">Browser / Client</div><span class="farr">→</span>
+      <div class="fbox">HTTP Request</div><span class="farr">→</span>
+      <div class="fbox">Node.js Server</div><span class="farr">→</span>
+      <div class="fbox">Router (URL + Method)</div><span class="farr">→</span>
+      <div class="fbox">Response (JSON / File)</div>
+    </div>
+    <div class="grid-3" style="margin-top:1.2rem">
+      <div class="ccard yellow"><div class="ci">📩</div><div class="ct">req Object</div><div class="cd">Request ki sari info — method, url, headers, body. IncomingMessage class ka object!</div></div>
+      <div class="ccard blue"><div class="ci">📤</div><div class="ct">res Object</div><div class="cd">Response bhejne ke liye — status set karo, headers likho, body bhejo. ServerResponse class!</div></div>
+      <div class="ccard green"><div class="ci">🔄</div><div class="ct">Event Loop</div><div class="cd">Node.js ek waqt mein hazaro requests handle kar sakta hai — async operations ki wajah se!</div></div>
+    </div>
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">✅</span>
+      <div class="alert-body"><strong>Yaad Rakhna!</strong>req = aane wala data (readable stream). res = jaane wala jawab (writable stream). Dono streams hain!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== HTTP BASICS ===== -->
+  <section class="section" id="http">
+    <div class="section-tag">Part A — Core Concepts</div>
+    <h2 class="section-title fi">HTTP Basics — Node.js mein 🌐</h2>
+    <p class="section-desc fi">HTTP ek request/response protocol hai — client request karta hai, server respond karta hai. Node mein ye bilkul seedha hai!</p>
+
+    <h3 class="fi" style="margin:0 0 1rem;font-family:'Baloo Bhaijaan 2',cursive">Pehla HTTP Server — Smallest Example</h3>
+    <div class="code-block fi">
+      <span class="lb">server.js</span>
+<pre><span class="kw">const</span> <span class="attr">http</span> = <span class="fn">require</span>(<span class="str">'http'</span>);
+
+<span class="kw">const</span> <span class="attr">server</span> = <span class="attr">http</span>.<span class="fn">createServer</span>((<span class="attr">req</span>, <span class="attr">res</span>) => {
+  <span class="attr">res</span>.<span class="attr">statusCode</span> = <span class="val">200</span>;   <span class="cm">// 200 = OK</span>
+  <span class="attr">res</span>.<span class="fn">setHeader</span>(<span class="str">'Content-Type'</span>, <span class="str">'text/plain; charset=utf-8'</span>);
+  <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'Hello from Node HTTP server!\n'</span>);
+});
+
+<span class="attr">server</span>.<span class="fn">listen</span>(<span class="val">3000</span>, () => {
+  <span class="val">console</span>.<span class="fn">log</span>(<span class="str">'Server chal raha hai: http://localhost:3000/'</span>);
+});</pre>
+    </div>
+
+    <div class="alert tip fi">
+      <span class="alert-icon">🚀</span>
+      <div class="alert-body"><strong>Try Karo!</strong>node server.js chalao, browser mein http://localhost:3000 kholo. Ya terminal mein: curl -i http://localhost:3000</div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">HTTP Methods aur Status Codes</h3>
+    <div class="grid-2">
+      <div class="table-wrap fi">
+        <table>
+          <thead><tr><th>Method</th><th>Kaam</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill">GET</span></td><td>Data padhna (Read)</td></tr>
+            <tr><td><span class="pill">POST</span></td><td>Data banana (Create)</td></tr>
+            <tr><td><span class="pill">PUT/PATCH</span></td><td>Data update karna</td></tr>
+            <tr><td><span class="pill">DELETE</span></td><td>Data hatana</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap fi">
+        <table>
+          <thead><tr><th>Status Code</th><th>Matlab</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill">200</span></td><td>OK — sab theek hai</td></tr>
+            <tr><td><span class="pill">201</span></td><td>Created — naya bana</td></tr>
+            <tr><td><span class="pill">400</span></td><td>Bad Request — galat data</td></tr>
+            <tr><td><span class="pill">404</span></td><td>Not Found — nahi mila</td></tr>
+            <tr><td><span class="pill">500</span></td><td>Server Error — kuch toot gaya</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">req se Data Padhna</h3>
+    <div class="code-block fi">
+      <span class="lb">server.js — req properties</span>
+<pre><span class="cm">// createServer callback ke andar:</span>
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">req</span>.<span class="attr">method</span>);          <span class="cm">// e.g., 'GET'</span>
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">req</span>.<span class="attr">url</span>);             <span class="cm">// e.g., '/search?q=node'</span>
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">req</span>.<span class="attr">headers</span>.<span class="attr">host</span>);   <span class="cm">// e.g., 'localhost:3000'</span></pre>
+    </div>
+
+    <div class="alert warn fi">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>Important Baat!</strong>req.url sirf path + query hota hai — poora URL nahi! Isliye URL module zaroor use karo parse karne ke liye!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== URL MODULE ===== -->
+  <section class="section" id="url">
+    <div class="section-tag">Part B — URL Module</div>
+    <h2 class="section-title fi">URL Module — URL ko Tukron mein Todno 🔗</h2>
+    <p class="section-desc fi">URL class se pathname aur query parameters alag karo — string split karne se zyada safe aur reliable!</p>
+
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="ccard yellow fi" style="opacity:1;transform:none"><div class="ci">📍</div><div class="ct">pathname</div><div class="cd">/products/42 — route path. Routing ke liye ye use hota hai!</div></div>
+      <div class="ccard blue fi" style="opacity:1;transform:none"><div class="ci">❓</div><div class="ct">searchParams</div><div class="cd">?q=node&limit=10 — query string. get('q') se value nikalo!</div></div>
+      <div class="ccard green fi" style="opacity:1;transform:none"><div class="ci">#️⃣</div><div class="ct">hash</div><div class="cd">#section — fragment. Ye browser side hota hai, server tak nahi aata!</div></div>
+    </div>
+
+    <div class="code-block fi">
+      <span class="lb">server.js — URL Parsing</span>
+<pre><span class="kw">const</span> { <span class="val">URL</span> } = <span class="fn">require</span>(<span class="str">'url'</span>);
+
+<span class="kw">function</span> <span class="fn">parseUrl</span>(<span class="attr">req</span>) {
+  <span class="cm">// base zaroor dena — req.url relative hota hai</span>
+  <span class="kw">const</span> <span class="attr">base</span> = <span class="str">`http://${<span class="attr">req</span>.<span class="attr">headers</span>.<span class="attr">host</span>}`</span>;
+  <span class="kw">return new</span> <span class="val">URL</span>(<span class="attr">req</span>.<span class="attr">url</span>, <span class="attr">base</span>);
+}
+
+<span class="cm">// Example use:</span>
+<span class="kw">const</span> <span class="attr">u</span> = <span class="fn">parseUrl</span>(<span class="attr">req</span>);
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">u</span>.<span class="attr">pathname</span>);                   <span class="cm">// '/search'</span>
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">u</span>.<span class="attr">searchParams</span>.<span class="fn">get</span>(<span class="str">'q'</span>));    <span class="cm">// 'node'</span></pre>
+    </div>
+
+    <div class="alert exam fi" style="margin-top:1rem">
+      <span class="alert-icon">📌</span>
+      <div class="alert-body"><strong>Exam ke liye!</strong>URL class use karne ke liye base zaroor dena parta hai — kyunki req.url relative hota hai (e.g., /search), poora URL nahi. Ye point yaad rakho!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== ROUTING ===== -->
+  <section class="section" id="routing">
+    <div class="section-tag">Part C — Routing</div>
+    <h2 class="section-title fi">Routing — Sahi Jagah Sahi Kaam 🚦</h2>
+    <p class="section-desc fi">Routing matlab: HTTP method + URL pathname dekho aur sahi handler function chalao. Express bhi yehi karta hai — andar se!</p>
+
+    <div class="code-block fi">
+      <span class="lb">server.js — Routes Object Pattern</span>
+<pre><span class="kw">const</span> <span class="attr">http</span> = <span class="fn">require</span>(<span class="str">'http'</span>);
+<span class="kw">const</span> { <span class="val">URL</span> } = <span class="fn">require</span>(<span class="str">'url'</span>);
+
+<span class="cm">// Sare routes ek object mein</span>
+<span class="kw">const</span> <span class="attr">routes</span> = {
+  <span class="str">'GET /'</span>: (<span class="attr">req</span>, <span class="attr">res</span>) => {
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">200</span>, { <span class="str">'Content-Type'</span>: <span class="str">'text/plain; charset=utf-8'</span> });
+    <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'Home Page\n'</span>);
+  },
+  <span class="str">'GET /api/time'</span>: (<span class="attr">req</span>, <span class="attr">res</span>) => {
+    <span class="kw">const</span> <span class="attr">payload</span> = { <span class="attr">now</span>: <span class="kw">new</span> <span class="val">Date</span>().<span class="fn">toISOString</span>() };
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">200</span>, { <span class="str">'Content-Type'</span>: <span class="str">'application/json; charset=utf-8'</span> });
+    <span class="attr">res</span>.<span class="fn">end</span>(<span class="val">JSON</span>.<span class="fn">stringify</span>(<span class="attr">payload</span>));
+  }
+};
+
+<span class="cm">// Main handler function</span>
+<span class="kw">function</span> <span class="fn">handler</span>(<span class="attr">req</span>, <span class="attr">res</span>) {
+  <span class="kw">const</span> <span class="attr">u</span> = <span class="kw">new</span> <span class="val">URL</span>(<span class="attr">req</span>.<span class="attr">url</span>, <span class="str">`http://${<span class="attr">req</span>.<span class="attr">headers</span>.<span class="attr">host</span>}`</span>);
+  <span class="kw">const</span> <span class="attr">key</span> = <span class="str">`${<span class="attr">req</span>.<span class="attr">method</span>} ${<span class="attr">u</span>.<span class="attr">pathname</span>}`</span>;
+  <span class="kw">const</span> <span class="attr">fn</span> = <span class="attr">routes</span>[<span class="attr">key</span>];
+
+  <span class="kw">if</span> (!<span class="attr">fn</span>) {
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">404</span>, { <span class="str">'Content-Type'</span>: <span class="str">'text/plain; charset=utf-8'</span> });
+    <span class="kw">return</span> <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'404 Not Found\n'</span>);
+  }
+  <span class="fn">fn</span>(<span class="attr">req</span>, <span class="attr">res</span>, <span class="attr">u</span>);
+}
+
+<span class="attr">http</span>.<span class="fn">createServer</span>(<span class="attr">handler</span>).<span class="fn">listen</span>(<span class="val">3000</span>);
+<span class="val">console</span>.<span class="fn">log</span>(<span class="str">'Listening on http://localhost:3000'</span>);</pre>
+    </div>
+
+    <div class="alert tip fi" style="margin-top:1rem">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Teaching Note</strong>Ye intentionally simple hai. Express mein middleware, parameterized routes aur error handling extra hoti hai — lekin andar se yehi logic hai!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== FILE SYSTEM ===== -->
+  <section class="section" id="fs">
+    <div class="section-tag">Part D — File System</div>
+    <h2 class="section-title fi">File System (FS) — Files Padhna aur Likhna 📁</h2>
+    <p class="section-desc fi">fs module se files padhte hain, likhte hain. Server mein hamesha async APIs use karo — warna event loop block ho jaega!</p>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="ccard red fi" style="opacity:1;transform:none">
+        <div class="ci">🔴</div>
+        <div class="ct">Synchronous — Blocking</div>
+        <div class="cd">fs.readFileSync(), fs.writeFileSync() — ek kaam karte waqt dusra kuch nahi hota. Server mein mat use karo!</div>
+      </div>
+      <div class="ccard green fi" style="opacity:1;transform:none">
+        <div class="ci">✅</div>
+        <div class="ct">Async — Non-Blocking</div>
+        <div class="cd">fs.promises.readFile() ya callback style — file padh raha hai lekin server doosri requests handle karta rehta hai!</div>
+      </div>
+    </div>
+
+    <h3 class="fi" style="margin:0 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Async File Read — Promise Style</h3>
+    <div class="code-block fi">
+      <span class="lb">fileRead.js</span>
+<pre><span class="kw">const</span> <span class="attr">fs</span> = <span class="fn">require</span>(<span class="str">'fs/promises'</span>);
+
+<span class="kw">async function</span> <span class="fn">readTextFile</span>(<span class="attr">filePath</span>) {
+  <span class="cm">// utf8 dene se Buffer ki jagah string milti hai</span>
+  <span class="kw">const</span> <span class="attr">data</span> = <span class="kw">await</span> <span class="attr">fs</span>.<span class="fn">readFile</span>(<span class="attr">filePath</span>, <span class="str">'utf8'</span>);
+  <span class="kw">return</span> <span class="attr">data</span>;
+}
+
+<span class="fn">readTextFile</span>(<span class="str">'./hello.txt'</span>)
+  .<span class="fn">then</span>(<span class="attr">content</span> => <span class="val">console</span>.<span class="fn">log</span>(<span class="attr">content</span>))
+  .<span class="fn">catch</span>(<span class="attr">err</span> => <span class="val">console</span>.<span class="fn">error</span>(<span class="attr">err</span>));</pre>
+    </div>
+
+    <div class="table-wrap fi" style="margin-top:1.2rem">
+      <table>
+        <thead><tr><th>API Style</th><th>Method</th><th>Server mein Use?</th></tr></thead>
+        <tbody>
+          <tr><td>Synchronous</td><td><span class="pill">fs.readFileSync()</span></td><td>❌ Mat karo — blocking!</td></tr>
+          <tr><td>Callback Async</td><td><span class="pill">fs.readFile(path, cb)</span></td><td>✅ Ho sakta hai</td></tr>
+          <tr><td>Promise Async</td><td><span class="pill">fs.promises.readFile()</span></td><td>✅ Best choice!</td></tr>
+          <tr><td>Stream</td><td><span class="pill">fs.createReadStream()</span></td><td>✅ Bari files ke liye</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert warn fi" style="margin-top:1rem">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>Server mein Rule!</strong>Hamesha async APIs use karo — readFileSync use karne se server ki ek request doosri sab requests rok deti hai!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== STREAMS ===== -->
+  <section class="section" id="streams">
+    <div class="section-tag">Part E — Streams</div>
+    <h2 class="section-title fi">Streams aur pipe() — Smart Data Bhejne ka Tarika 🌊</h2>
+    <p class="section-desc fi">Stream data ko chhote chhote chunks mein process karta hai. Bari files ke liye ideal — poori file RAM mein load nahi hoti!</p>
+
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="ccard yellow fi" style="opacity:1;transform:none"><div class="ci">📖</div><div class="ct">Readable Stream</div><div class="cd">Data padhne ka source — file, HTTP request body, database response. fs.createReadStream() readable hai!</div></div>
+      <div class="ccard blue fi" style="opacity:1;transform:none"><div class="ci">✍️</div><div class="ct">Writable Stream</div><div class="cd">Data likhne ki jagah — HTTP response, file, console. res object writable stream hai!</div></div>
+      <div class="ccard green fi" style="opacity:1;transform:none"><div class="ci">🔧</div><div class="ct">pipe()</div><div class="cd">Readable ko Writable se connect karo! Backpressure khud handle karta hai — memory safe rehti hai!</div></div>
+    </div>
+
+    <div class="code-block fi">
+      <span class="lb">server.js — Stream File to Response</span>
+<pre><span class="kw">const</span> <span class="attr">fs</span> = <span class="fn">require</span>(<span class="str">'fs'</span>);
+
+<span class="kw">function</span> <span class="fn">streamFileToResponse</span>(<span class="attr">filePath</span>, <span class="attr">res</span>) {
+  <span class="kw">const</span> <span class="attr">fileStream</span> = <span class="attr">fs</span>.<span class="fn">createReadStream</span>(<span class="attr">filePath</span>);
+
+  <span class="attr">fileStream</span>.<span class="fn">on</span>(<span class="str">'error'</span>, (<span class="attr">err</span>) => {
+    <span class="cm">// ENOENT = file nahi mila, EACCES = permission nahi</span>
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">404</span>, { <span class="str">'Content-Type'</span>: <span class="str">'text/plain; charset=utf-8'</span> });
+    <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'File not found\n'</span>);
+  });
+
+  <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">200</span>, { <span class="str">'Content-Type'</span>: <span class="str">'application/octet-stream'</span> });
+  <span class="attr">fileStream</span>.<span class="fn">pipe</span>(<span class="attr">res</span>);  <span class="cm">// chunks mein data jata hai + backpressure!</span>
+}</pre>
+    </div>
+
+    <div class="alert tip fi" style="margin-top:1rem">
+      <span class="alert-icon">💧</span>
+      <div class="alert-body"><strong>Backpressure kya hota hai?</strong>Agar network slow hai to response data utni jaldi nahi le sakta jitni jaldi file deta hai. pipe() dono ki speed coordinate karta hai — memory overflow nahi hoti!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== EXAMPLES ===== -->
+  <section class="section" id="examples">
+    <div class="section-tag">Part F — Examples</div>
+    <h2 class="section-title fi">Real Examples — JSON API aur Static Files 💡</h2>
+    <p class="section-desc fi">Do complete examples — ek JSON API aur ek static file server. Dono milake ek chhota sa web server ban jaata hai!</p>
+
+    <h3 class="fi" style="margin:0 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Example A — JSON API with Query Params</h3>
+    <p class="section-desc fi" style="margin-bottom:1rem">GET /api/echo?msg=hello — query param lo, JSON mein wapas bhejo!</p>
+    <div class="code-block fi">
+      <span class="lb">server.js — JSON Echo API</span>
+<pre><span class="kw">const</span> <span class="attr">http</span> = <span class="fn">require</span>(<span class="str">'http'</span>);
+<span class="kw">const</span> { <span class="val">URL</span> } = <span class="fn">require</span>(<span class="str">'url'</span>);
+
+<span class="attr">http</span>.<span class="fn">createServer</span>((<span class="attr">req</span>, <span class="attr">res</span>) => {
+  <span class="kw">const</span> <span class="attr">u</span> = <span class="kw">new</span> <span class="val">URL</span>(<span class="attr">req</span>.<span class="attr">url</span>, <span class="str">`http://${<span class="attr">req</span>.<span class="attr">headers</span>.<span class="attr">host</span>}`</span>);
+
+  <span class="kw">if</span> (<span class="attr">req</span>.<span class="attr">method</span> === <span class="str">'GET'</span> && <span class="attr">u</span>.<span class="attr">pathname</span> === <span class="str">'/api/echo'</span>) {
+    <span class="kw">const</span> <span class="attr">msg</span> = <span class="attr">u</span>.<span class="attr">searchParams</span>.<span class="fn">get</span>(<span class="str">'msg'</span>) ?? <span class="str">''</span>;
+    <span class="kw">const</span> <span class="attr">payload</span> = { <span class="attr">ok</span>: <span class="kw">true</span>, <span class="attr">msg</span> };
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">200</span>, { <span class="str">'Content-Type'</span>: <span class="str">'application/json; charset=utf-8'</span> });
+    <span class="kw">return</span> <span class="attr">res</span>.<span class="fn">end</span>(<span class="val">JSON</span>.<span class="fn">stringify</span>(<span class="attr">payload</span>));
+  }
+
+  <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">404</span>, { <span class="str">'Content-Type'</span>: <span class="str">'text/plain; charset=utf-8'</span> });
+  <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'Not Found\n'</span>);
+}).<span class="fn">listen</span>(<span class="val">3000</span>);</pre>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Example B — Static File Server (Security ke Sath)</h3>
+    <p class="section-desc fi" style="margin-bottom:1rem">public/ folder se files serve karo — path traversal se bhi protected!</p>
+    <div class="code-block fi">
+      <span class="lb">server.js — Static File Server</span>
+<pre><span class="kw">const</span> <span class="attr">http</span> = <span class="fn">require</span>(<span class="str">'http'</span>);
+<span class="kw">const</span> <span class="attr">fs</span>   = <span class="fn">require</span>(<span class="str">'fs'</span>);
+<span class="kw">const</span> <span class="attr">path</span> = <span class="fn">require</span>(<span class="str">'path'</span>);
+<span class="kw">const</span> { <span class="val">URL</span> } = <span class="fn">require</span>(<span class="str">'url'</span>);
+
+<span class="kw">const</span> <span class="attr">publicDir</span> = <span class="attr">path</span>.<span class="fn">join</span>(<span class="val">__dirname</span>, <span class="str">'public'</span>);
+
+<span class="cm">// File extension se Content-Type decide karo</span>
+<span class="kw">function</span> <span class="fn">contentType</span>(<span class="attr">filePath</span>) {
+  <span class="kw">const</span> <span class="attr">ext</span> = <span class="attr">path</span>.<span class="fn">extname</span>(<span class="attr">filePath</span>).<span class="fn">toLowerCase</span>();
+  <span class="kw">return</span> ({
+    <span class="str">'.html'</span>: <span class="str">'text/html; charset=utf-8'</span>,
+    <span class="str">'.css'</span>:  <span class="str">'text/css; charset=utf-8'</span>,
+    <span class="str">'.js'</span>:   <span class="str">'application/javascript; charset=utf-8'</span>,
+    <span class="str">'.json'</span>: <span class="str">'application/json; charset=utf-8'</span>,
+    <span class="str">'.png'</span>:  <span class="str">'image/png'</span>,
+    <span class="str">'.jpg'</span>:  <span class="str">'image/jpeg'</span>
+  })[<span class="attr">ext</span>] || <span class="str">'application/octet-stream'</span>;
+}
+
+<span class="cm">// Security: public folder se bahar nahi jaane dena!</span>
+<span class="kw">function</span> <span class="fn">safeJoin</span>(<span class="attr">base</span>, <span class="attr">target</span>) {
+  <span class="kw">const</span> <span class="attr">targetPath</span> = <span class="attr">path</span>.<span class="fn">normalize</span>(<span class="attr">path</span>.<span class="fn">join</span>(<span class="attr">base</span>, <span class="attr">target</span>));
+  <span class="kw">if</span> (!<span class="attr">targetPath</span>.<span class="fn">startsWith</span>(<span class="attr">base</span>)) <span class="kw">return null</span>;
+  <span class="kw">return</span> <span class="attr">targetPath</span>;
+}
+
+<span class="attr">http</span>.<span class="fn">createServer</span>((<span class="attr">req</span>, <span class="attr">res</span>) => {
+  <span class="kw">const</span> <span class="attr">u</span> = <span class="kw">new</span> <span class="val">URL</span>(<span class="attr">req</span>.<span class="attr">url</span>, <span class="str">`http://${<span class="attr">req</span>.<span class="attr">headers</span>.<span class="attr">host</span>}`</span>);
+  <span class="kw">let</span> <span class="attr">reqPath</span> = <span class="fn">decodeURIComponent</span>(<span class="attr">u</span>.<span class="attr">pathname</span>);
+  <span class="kw">if</span> (<span class="attr">reqPath</span> === <span class="str">'/'</span>) <span class="attr">reqPath</span> = <span class="str">'/index.html'</span>;
+
+  <span class="kw">const</span> <span class="attr">filePath</span> = <span class="fn">safeJoin</span>(<span class="attr">publicDir</span>, <span class="attr">reqPath</span>);
+  <span class="kw">if</span> (!<span class="attr">filePath</span>) {
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">400</span>); <span class="kw">return</span> <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'Bad Request\n'</span>);
+  }
+
+  <span class="kw">const</span> <span class="attr">stream</span> = <span class="attr">fs</span>.<span class="fn">createReadStream</span>(<span class="attr">filePath</span>);
+  <span class="attr">stream</span>.<span class="fn">on</span>(<span class="str">'error'</span>, () => {
+    <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">404</span>); <span class="attr">res</span>.<span class="fn">end</span>(<span class="str">'File Not Found\n'</span>);
+  });
+  <span class="attr">res</span>.<span class="fn">writeHead</span>(<span class="val">200</span>, { <span class="str">'Content-Type'</span>: <span class="fn">contentType</span>(<span class="attr">filePath</span>) });
+  <span class="attr">stream</span>.<span class="fn">pipe</span>(<span class="attr">res</span>);
+}).<span class="fn">listen</span>(<span class="val">3000</span>);</pre>
+    </div>
+
+    <div class="alert warn fi" style="margin-top:1rem">
+      <span class="alert-icon">🔐</span>
+      <div class="alert-body"><strong>Security — Path Traversal!</strong>User /../secret.txt jaisa path de ke public folder se bahar ja sakta hai. safeJoin() function ye rokta hai — path normalize karo aur check karo ke base se shuru hota hai!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== DEBUGGING ===== -->
+  <section class="section" id="debugging">
+    <div class="section-tag">Debugging Clinic</div>
+    <h2 class="section-title fi">Debugging Clinic 🐛</h2>
+    <p class="section-desc fi">Sabse common errors aur unka hal — ye yaad rakho to kabhi phase nahi khao ge!</p>
+    <div class="grid-2">
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>res.end() bhool gaye!</strong>Agar response end nahi kiya to browser hanging rehta hai. Hamesha res.end() call karo ya pipe() use karo!</div>
+      </div>
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>Galat Content-Type!</strong>JSON bhej rahe ho to application/json lagao — text/plain se browser confuse hota hai aur JSON parse nahi karta!</div>
+      </div>
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>readFile bari file ke liye!</strong>Bari files ke liye readFile() puri file RAM mein load kar leta hai. Server crash ho sakta hai — createReadStream() use karo!</div>
+      </div>
+      <div class="alert tip fi" style="margin:0">
+        <span class="alert-icon">💡</span>
+        <div class="alert-body"><strong>Pro Tip</strong>Hamesha stream aur fs errors handle karo — unhandled errors se server crash ho jaata hai. try/catch aur .on('error') zaroor lagao!</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== QUIZ ===== -->
+  <section class="section" id="quiz">
+    <div class="section-tag">Exit Ticket</div>
+    <h2 class="section-title fi">Apna Test Karo! 🧠</h2>
+    <p class="section-desc fi">Pach sawaal — sahi jawab green, galat red ho jaega. End mein score bhi milega!</p>
+    <div id="quizContainer"></div>
+    <div id="quizScore" style="display:none;margin-top:1rem" class="alert tip">
+      <span class="alert-icon">🎉</span>
+      <div class="alert-body"><strong id="scoreText"></strong></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== HOMEWORK ===== -->
+  <section class="section" id="homework">
+    <div class="section-tag">Ghar ka Kaam</div>
+    <h2 class="section-title fi">Homework aur Lab Task 📝</h2>
+    <p class="section-desc fi">Practice se hi mastery aati hai — ye tasks karo!</p>
+    <div class="grid-2">
+      <div class="ccard red fi" style="opacity:1;transform:none">
+        <div class="ci">🏠</div>
+        <div class="ct">Homework: Mini File Server</div>
+        <div class="cd">
+          <strong style="color:var(--text)">Ek chhota file server banao!</strong><br><br>
+          ✅ GET /api/sum?a=5&amp;b=7 → JSON {a,b,sum:12}<br>
+          ✅ Validate: a ya b missing ho to 400 error<br>
+          ✅ POST /api/echo — body paho aur JSON mein wapas do<br>
+          ✅ Logging add karo: method, path, status, time<br><br>
+          <span style="color:var(--muted)">Submission: GitHub link ya zip + screenshots</span>
+        </div>
+      </div>
+      <div class="ccard yellow fi" style="opacity:1;transform:none">
+        <div class="ci">💻</div>
+        <div class="ct">Lab Task: Static File Streaming</div>
+        <div class="cd">
+          1️⃣ <code style="color:var(--yellow)">mkdir file-server && cd file-server</code><br>
+          2️⃣ <code style="color:var(--yellow)">mkdir public</code> — index.html andar rakho<br>
+          3️⃣ / → /index.html stream karo<br>
+          4️⃣ File na mile to 404 bhejo<br>
+          5️⃣ Galat path (/../) try karo — 400 aana chahiye<br><br>
+          <strong style="color:var(--green)">🌟 Bonus:</strong> Cache-Control header add karo!
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== RECAP ===== -->
+  <section class="section" id="recap">
+    <div class="section-tag">Quick Recap</div>
+    <h2 class="section-title fi">5 Key Yaad Rakhne Wali Baatein 🔑</h2>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">http.createServer() low-level control deta hai</div><div class="sdesc">req aur res objects — IncomingMessage aur ServerResponse. Dono streams hain!</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">URL parsing ke liye new URL(req.url, base) use karo</div><div class="sdesc">base zaroor do — req.url relative hota hai. searchParams.get() se query values nikalo!</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">Routing = method + pathname → handler function</div><div class="sdesc">Routes object se clean routing hoti hai — agar route nahi mila to 404 bhejo!</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">Server mein async fs APIs use karo</div><div class="sdesc">readFileSync event loop block karta hai. fs.promises.readFile() ya stream use karo!</div></div></div>
+      <div class="step"><div class="snum">5</div><div><div class="stitle">Streams + pipe() bari files ke liye sahi raasta hai</div><div class="sdesc">createReadStream().pipe(res) — memory efficient, backpressure automatically handle hoti hai!</div></div></div>
+    </div>
+
+    <div class="alert exam fi" style="margin-top:1.5rem">
+      <span class="alert-icon">🎯</span>
+      <div class="alert-body"><strong>Exam ke liye Jawab!</strong>"Streams ka faida kya hai?" → Bari files poori RAM mein load nahi hoti, chunks mein process hoti hain — memory bachti hai aur server fast rehta hai. Ye jawab likho!</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>CSC337 — Advanced Web Technologies 🇵🇰</p>
+    <p style="margin-top:.4rem">Banaya gaya Pakistani students ke liye ❤️ — <strong>HTTP Server Seekhain, Pakistan Banain!</strong></p>
+  </footer>
+
+</main>
+
+<script>
+// === STARS ===
+const sc = document.getElementById('stars');
+for(let i=0;i<100;i++){
+  const s=document.createElement('div'); s.className='star';
+  const sz=Math.random()>0.8?3:2;
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s`;
+  sc.appendChild(s);
+}
+
+// === PROGRESS ===
+window.addEventListener('scroll',()=>{
+  const t=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('pb').style.width=(window.scrollY/t*100)+'%';
+  updateActiveNav();
+});
+
+// === SIDEBAR MOBILE ===
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+function setActive(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(window.innerWidth<=768) closeSidebar();
+}
+
+function updateActiveNav(){
+  const sections=['hero','kyun','architecture','http','url','routing','fs','streams','examples','debugging','quiz','homework','recap'];
+  let current='hero';
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&window.scrollY>=el.offsetTop-120) current=id;
+  });
+  document.querySelectorAll('.nav-item').forEach(a=>{
+    a.classList.remove('active');
+    if(a.getAttribute('href')==='#'+current) a.classList.add('active');
+  });
+}
+
+// === INTERSECTION OBSERVER ===
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i%5*100);
+  });
+},{threshold:0.1});
+document.querySelectorAll('.ccard,.step,.quiz-card,.fi').forEach(el=>obs.observe(el));
+
+// === QUIZ ===
+const qs=[
+  {q:"Node.js mein HTTP server banane ke liye kaunsa module use hota hai?",opts:["url","path","http","fs"],ans:2},
+  {q:"req.url parse karne ke liye URL class mein base kyun dena parta hai?",opts:["Security ke liye","req.url relative hota hai — poora URL nahi","Routing ke liye","Performance ke liye"],ans:1},
+  {q:"Server mein bari files ke liye kaunsa fs API best hai?",opts:["fs.readFileSync()","fs.readFile() callback","fs.promises.readFile()","fs.createReadStream()"],ans:3},
+  {q:"pipe() ka kya faida hai?",opts:["Routing fast hoti hai","Data chunks mein jata hai aur backpressure handle hoti hai","JSON automatically parse hota hai","URL decode hoti hai"],ans:1},
+  {q:"Path traversal attack kya hai?",opts:["Galat HTTP method use karna","/../ se public folder se bahar jaana","Content-Type galat likhna","Port change karna"],ans:1}
+];
+let answered=0,score=0;
+const qc=document.getElementById('quizContainer');
+qs.forEach((q,qi)=>{
+  const card=document.createElement('div');
+  card.className='quiz-card';
+  card.innerHTML=`<div class="quiz-q"><span class="qnum">Q${qi+1}.</span>${q.q}</div>
+  <div class="options">${q.opts.map((o,oi)=>`<div class="option" data-qi="${qi}" data-oi="${oi}">${String.fromCharCode(65+oi)}) ${o}</div>`).join('')}</div>
+  <div class="qresult" id="qr${qi}"></div>`;
+  qc.appendChild(card);
+  obs.observe(card);
+});
+document.querySelectorAll('.option').forEach(o=>{
+  o.addEventListener('click',function(){
+    const qi=+this.dataset.qi,oi=+this.dataset.oi;
+    const rd=document.getElementById('qr'+qi);
+    if(rd.dataset.done) return;
+    rd.dataset.done='1'; answered++;
+    if(oi===qs[qi].ans){
+      this.classList.add('correct');
+      rd.textContent='✅ Bilkul sahi! Shabash!'; rd.style.color='#06d6a0'; score++;
+    } else {
+      this.classList.add('wrong');
+      document.querySelectorAll(`[data-qi="${qi}"]`)[qs[qi].ans].classList.add('correct');
+      rd.textContent='❌ Galat — sahi jawab green mein dekho!'; rd.style.color='#ff8b94';
+    }
+    if(answered===qs.length){
+      const sd=document.getElementById('quizScore');
+      const p=score/qs.length*100;
+      sd.style.display='flex';
+      document.getElementById('scoreText').textContent=
+        p===100?'🌟 Perfect 5/5! Ustad ho aap!':
+        p>=80?`🎉 ${score}/5 — Bohat acha! Thori practice aur!`:
+        p>=60?`📚 ${score}/5 — Theek hai, dobara parho!`:
+        `💪 ${score}/5 — Himmat mat haro, koshish karo!`;
+      sd.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+});
+</script>
+</body>
+</html>

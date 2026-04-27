@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js Seekhain - Lecture 02</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #e63946;
+  --green: #06d6a0;
+  --blue: #118ab2;
+  --yellow: #ffd166;
+  --dark: #0d1117;
+  --darker: #080d13;
+  --card: #161b22;
+  --card2: #1e2530;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --sidebar-w: 270px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--darker);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  position: fixed; top:0; left:0; height:3px;
+  background: linear-gradient(90deg, var(--red), var(--accent), var(--green));
+  z-index: 9999; width:0%; transition: width 0.1s;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  position: fixed; top:0; left:0; bottom:0;
+  z-index: 200;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--red), #c1121f);
+  color: #fff; font-size: 0.7rem; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 0.25rem 0.7rem; border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+.sidebar-logo h1 {
+  font-family: 'Baloo Bhaijaan 2', cursive;
+  font-size: 1.3rem; font-weight: 800;
+  background: linear-gradient(135deg, #fff, var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+.sidebar-logo p {
+  font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem;
+}
+.nav-section-label {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  padding: 1rem 1.2rem 0.3rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border-radius: 0; border-left: 3px solid transparent;
+  transition: all 0.2s;
+  text-decoration: none; color: var(--muted);
+  font-size: 0.88rem; font-weight: 600;
+}
+.nav-item:hover {
+  background: rgba(88,166,255,0.08);
+  color: var(--text);
+  border-left-color: var(--accent);
+}
+.nav-item.active {
+  background: rgba(88,166,255,0.12);
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink:0; }
+.nav-item .dot {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--border); margin-left:auto; flex-shrink:0;
+  transition: background 0.2s;
+}
+.nav-item.active .dot,
+.nav-item:hover .dot { background: var(--accent); }
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--muted);
+  text-align: center;
+}
+
+/* ===== MOBILE TOGGLE ===== */
+.mob-toggle {
+  display: none;
+  position: fixed; top: 1rem; left: 1rem;
+  z-index: 500;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+}
+.stars {
+  position: fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.star {
+  position:absolute; border-radius:50%; background:white;
+  animation: twinkle var(--dur) infinite var(--delay) ease-in-out;
+}
+@keyframes twinkle {
+  0%,100%{opacity:.1;transform:scale(1)}
+  50%{opacity:.9;transform:scale(1.5)}
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* ===== SECTION WRAPPER ===== */
+.section {
+  position:relative; z-index:1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  scroll-margin-top: 1rem;
+}
+.section-tag {
+  display:inline-block;
+  font-size:0.7rem; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--accent);
+  background: rgba(88,166,255,0.1);
+  padding: 0.25rem 0.7rem; border-radius:999px;
+  margin-bottom:0.7rem;
+}
+.section-title {
+  font-family:'Baloo Bhaijaan 2',cursive;
+  font-size: clamp(1.6rem,3.5vw,2.4rem);
+  font-weight:800; margin-bottom:0.5rem; line-height:1.2;
+}
+.section-desc { color:var(--muted); max-width:720px; line-height:1.7; margin-bottom:2rem; }
+hr.divider {
+  border:none; border-top:1px solid var(--border);
+  max-width:860px; margin:0 auto;
+}
+
+/* ===== HERO ===== */
+.hero-badge {
+  animation:fadeUp .7s ease .1s both;
+  display:inline-block;
+  background:linear-gradient(135deg,var(--red),#c1121f);
+  color:#fff;font-size:.72rem;font-weight:800;letter-spacing:1px;
+  text-transform:uppercase;padding:.3rem 1rem;border-radius:999px;margin-bottom:1.2rem;
+}
+.hero-title {
+  font-family:'Baloo Bhaijaan 2',cursive;
+  font-size:clamp(2.2rem,6vw,4.2rem);
+  font-weight:800;
+  background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--green) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.1;margin-bottom:1rem;animation:fadeUp .9s ease .2s both;
+}
+.hero-desc {
+  color:var(--muted);max-width:590px;line-height:1.7;
+  animation:fadeUp .9s ease .4s both;margin-bottom:2rem;
+}
+.hero-stats {
+  display:flex; gap:1.2rem; flex-wrap:wrap; justify-content:center;
+  animation: fadeUp 0.9s ease 0.6s both;
+}
+.stat {
+  background: var(--card); border:1px solid var(--border);
+  padding: 0.8rem 1.4rem; border-radius:12px; text-align:center;
+}
+.stat-num { font-size:1.8rem; font-weight:800; color:var(--accent); font-family:'Baloo Bhaijaan 2',cursive; }
+.stat-label { font-size:0.75rem; color:var(--muted); }
+
+/* ===== GRID ===== */
+.grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+.grid-4 { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; }
+
+/* ===== CONCEPT CARD ===== */
+.ccard {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+  position:relative; overflow:hidden;
+  opacity:0; transform:translateY(24px);
+  transition: all 0.5s ease;
+}
+.ccard::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.ccard.red::before{background:var(--red)}
+.ccard.blue::before{background:var(--blue)}
+.ccard.green::before{background:var(--green)}
+.ccard.yellow::before{background:var(--yellow)}
+.ccard.accent::before{background:var(--accent)}
+.ccard.visible{opacity:1;transform:translateY(0)}
+.ccard:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.35);border-color:var(--accent)}
+.ccard .ci{font-size:1.8rem;margin-bottom:.6rem}
+.ccard .ct{font-family:'Baloo Bhaijaan 2',cursive;font-size:1.05rem;font-weight:800;margin-bottom:.4rem}
+.ccard .cd{color:var(--muted);font-size:.88rem;line-height:1.6}
+.ccard ul{margin:.6rem 0 0 1.1rem;color:var(--muted);font-size:.88rem;line-height:1.7}
+.ccard li{margin:.25rem 0}
+
+/* ===== FLOW ===== */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;justify-content:center;margin:1.2rem 0}
+.fbox{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;padding:.55rem 1.1rem;
+  font-size:.88rem;font-weight:700;
+  transition:all .3s;
+}
+.fbox:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.05)}
+.farr{color:var(--accent);font-size:1.1rem}
+
+/* ===== CODE BLOCK ===== */
+.code-block{
+  background:#0d1117;border:1px solid var(--border);
+  border-radius:12px;padding:1.4rem;
+  font-family:'Courier New',monospace;font-size:.88rem;line-height:1.9;
+  overflow-x:auto;position:relative;color:#e6edf3;
+}
+.code-block .lb{position:absolute;top:.7rem;right:.9rem;font-size:.68rem;color:var(--muted);background:var(--card2);padding:.15rem .5rem;border-radius:5px;font-family:'Nunito',sans-serif}
+.kw{color:#ff7b72}.str{color:#a5d6ff}.dec{color:#d2a8ff}.val{color:#79c0ff}.cm{color:#8b949e;font-style:italic}.tag{color:#7ee787}.attr{color:#ffa657}.fn{color:#e3b341}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--card2);padding:.85rem 1.1rem;text-align:left;font-size:.82rem;color:var(--accent);font-weight:700;border-bottom:1px solid var(--border)}
+td{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);font-size:.86rem;vertical-align:top;line-height:1.55}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(88,166,255,.05)}
+.pill{display:inline-block;background:rgba(88,166,255,.15);color:var(--accent);padding:.15rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem}
+
+/* ===== ALERT ===== */
+.alert{border-radius:12px;padding:1.1rem 1.3rem;margin:.8rem 0;border-left:4px solid;display:flex;gap:.7rem;align-items:flex-start}
+.alert-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.alert.warn{background:rgba(255,209,102,.1);border-color:var(--yellow);color:#ffd166}
+.alert.tip{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}
+.alert.exam{background:rgba(230,57,70,.1);border-color:var(--red);color:#ff8b94}
+.alert.info{background:rgba(88,166,255,.1);border-color:var(--accent);color:var(--accent)}
+.alert-body{font-size:.88rem;line-height:1.6}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert-body ol,.alert-body ul{margin:.4rem 0 0 1.1rem}
+.alert-body li{margin:.25rem 0}
+
+/* ===== STEPS ===== */
+.steps{display:flex;flex-direction:column;gap:1rem}
+.step{display:flex;gap:1rem;align-items:flex-start;opacity:0;transform:translateX(-15px);transition:all .5s}
+.step.visible{opacity:1;transform:translateX(0)}
+.snum{width:34px;height:34px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#388bff);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem}
+.stitle{font-weight:700;margin-bottom:.2rem}
+.sdesc{color:var(--muted);font-size:.88rem;line-height:1.6}
+.scode{display:inline-block;background:var(--darker);border:1px solid var(--border);padding:.18rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem;color:var(--accent);margin-top:.35rem}
+
+/* ===== QUIZ ===== */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.3rem;margin-bottom:1rem;opacity:0;transform:translateY(18px);transition:all .5s}
+.quiz-card.visible{opacity:1;transform:translateY(0)}
+.quiz-q{font-family:'Baloo Bhaijaan 2',cursive;font-size:.98rem;font-weight:700;margin-bottom:.9rem}
+.qnum{color:var(--accent);margin-right:.4rem}
+.options{display:flex;flex-direction:column;gap:.45rem}
+.option{padding:.6rem 1rem;border-radius:9px;border:1px solid var(--border);cursor:pointer;font-size:.88rem;transition:all .2s;background:var(--card2)}
+.option:hover{border-color:var(--accent);background:rgba(88,166,255,.1)}
+.option.correct{background:rgba(6,214,160,.2);border-color:var(--green);color:var(--green)}
+.option.wrong{background:rgba(230,57,70,.15);border-color:var(--red);color:#ff8b94}
+.qresult{margin-top:.5rem;font-size:.83rem;font-weight:600;min-height:1rem}
+
+/* ===== EXTRA ===== */
+.fi{opacity:0;transform:translateY(22px);transition:all .6s ease}
+.fi.visible{opacity:1;transform:translateY(0)}
+.kicker{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:1rem}
+.big-quote{font-family:'Baloo Bhaijaan 2',cursive;font-size:1.25rem;line-height:1.5;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;margin:1rem 0;color:var(--text)}
+footer{position:relative;z-index:1;text-align:center;padding:2.5rem 1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.88rem}
+footer strong{color:var(--accent)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mob-toggle{display:flex}
+  .overlay.show{display:block}
+  .main{margin-left:0}
+  .section{padding:3rem 1rem}
+  .hero-title{font-size:2rem}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="pb"></div>
+<div class="stars" id="stars"></div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">Lecture 02</div>
+    <h1>Node.js<br>Seekhain 🚀</h1>
+    <p>Web / Server-Side Development</p>
+  </div>
+
+  <div class="nav-section-label">Shuru karo</div>
+  <a class="nav-item active" href="#hero" onclick="setActive(this)"><span class="icon">🏠</span> Home <span class="dot"></span></a>
+  <a class="nav-item" href="#overview" onclick="setActive(this)"><span class="icon">📋</span> Overview <span class="dot"></span></a>
+
+  <div class="nav-section-label">Lecture Topics</div>
+  <a class="nav-item" href="#intro" onclick="setActive(this)"><span class="icon">🟢</span> Node.js Intro <span class="dot"></span></a>
+  <a class="nav-item" href="#features" onclick="setActive(this)"><span class="icon">⚡</span> Core Features <span class="dot"></span></a>
+  <a class="nav-item" href="#architecture" onclick="setActive(this)"><span class="icon">🗺️</span> Architecture <span class="dot"></span></a>
+  <a class="nav-item" href="#modules" onclick="setActive(this)"><span class="icon">📦</span> Modules <span class="dot"></span></a>
+  <a class="nav-item" href="#eventloop" onclick="setActive(this)"><span class="icon">🔁</span> Event Loop <span class="dot"></span></a>
+  <a class="nav-item" href="#callbacks" onclick="setActive(this)"><span class="icon">📞</span> Callbacks <span class="dot"></span></a>
+  <a class="nav-item" href="#emitters" onclick="setActive(this)"><span class="icon">📡</span> Event Emitters <span class="dot"></span></a>
+  <a class="nav-item" href="#npm" onclick="setActive(this)"><span class="icon">🧰</span> NPM <span class="dot"></span></a>
+
+  <div class="nav-section-label">Practice</div>
+  <a class="nav-item" href="#activities" onclick="setActive(this)"><span class="icon">👥</span> Activities <span class="dot"></span></a>
+  <a class="nav-item" href="#quiz" onclick="setActive(this)"><span class="icon">🧠</span> Quiz <span class="dot"></span></a>
+  <a class="nav-item" href="#summary" onclick="setActive(this)"><span class="icon">🔑</span> Summary <span class="dot"></span></a>
+
+  <div class="sidebar-footer">
+    Pakistani students ke liye<br>
+    <strong style="color:var(--accent)">2 Ghante ka Theory Lecture</strong>
+  </div>
+</aside>
+
+<button class="mob-toggle" id="mobToggle" onclick="openSidebar()">☰</button>
+
+<!-- ========== MAIN ========== -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="section" id="hero" style="min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 0%,#1a2a4a 0%,transparent 65%)">
+    <div class="hero-badge">📚 Lecture 02 - Node.js Architecture</div>
+    <h2 class="hero-title">Node.js Seekhain! 🎓</h2>
+    <p class="hero-desc">Node.js Architecture, Core Features, Modules, Event Loop, Callbacks, Event Emitters aur NPM - sab kuch Roman English mein, previous lecture page ke same modern format ke sath.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">2</div><div class="stat-label">Hours</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Main Parts</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Module Types</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">NPM Commands</div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== OVERVIEW ===== -->
+  <section class="section" id="overview">
+    <div class="section-tag">Lecture Plan</div>
+    <h2 class="section-title fi">Lecture Notes ka Overview 📋</h2>
+    <p class="section-desc fi">Ye lecture notes 2-hour theory class ke liye tayar kiye gaye hain. Is mein real-life examples, clear explanations aur har 30 minutes ke baad student involvement activities shamil hain.</p>
+
+    <div class="grid-2">
+      <div class="ccard red"><div class="ci">🎯</div><div class="ct">Lecture Topic</div><div class="cd">Node.js Architecture, Core Features &amp; Modules</div></div>
+      <div class="ccard blue"><div class="ci">📘</div><div class="ct">Course</div><div class="cd">Web / Server-Side Development</div></div>
+      <div class="ccard green"><div class="ci">⏱️</div><div class="ct">Class Type &amp; Duration</div><div class="cd">Theory class - total duration 2 hours</div></div>
+      <div class="ccard yellow"><div class="ci">📚</div><div class="ct">Reference</div><div class="cd">Greg - Chapters 1, 2, 3, 4</div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Lecture Breakdown - 2 Hours</h3>
+    <div class="table-wrap fi">
+      <table>
+        <thead><tr><th>Time</th><th>Topic</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill">0 - 30 min</span></td><td>Introduction to Node.js, Core Features</td></tr>
+          <tr><td><span class="pill">30 - 60 min</span></td><td>Node.js Architectures &amp; Modules</td></tr>
+          <tr><td><span class="pill">60 - 90 min</span></td><td>Node Architecture: Event Loop, Callbacks, Event Emitters</td></tr>
+          <tr><td><span class="pill">90 - 120 min</span></td><td>NPM Repository &amp; Commands + Review Activity</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert info fi" style="margin-top:1.2rem">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Teaching Style</strong>Har topic ko simple Roman English mein explain kiya gaya hai taa ke students ko theory, example aur exam point teeno clear ho jayen.</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== INTRO ===== -->
+  <section class="section" id="intro">
+    <div class="section-tag">Part 1 - 0 se 30 Minute</div>
+    <h2 class="section-title fi">Introduction to Node.js 🟢</h2>
+    <p class="section-desc fi">Node.js JavaScript ko browser ke bahar run karne ki power deta hai. Is ki wajah se JavaScript sirf front-end tak limited nahi rehti, balki server-side development mein bhi use hoti hai.</p>
+
+    <div class="big-quote fi">Node.js aik open-source, cross-platform runtime environment hai jo JavaScript ko browser ke bahar run karta hai aur Google Chrome ke V8 JavaScript Engine par built hai.</div>
+
+    <div class="grid-3">
+      <div class="ccard red"><div class="ci">🌍</div><div class="ct">Open-source</div><div class="cd">Node.js freely available hai. Developers is ko use, improve aur share kar sakte hain.</div></div>
+      <div class="ccard blue"><div class="ci">💻</div><div class="ct">Cross-platform</div><div class="cd">Ye Windows, Linux aur macOS par run kar sakta hai.</div></div>
+      <div class="ccard green"><div class="ci">⚙️</div><div class="ct">Runtime Environment</div><div class="cd">Runtime ka matlab: aisa environment jahan code execute hota hai. Node.js JavaScript code ko browser ke bahar execute karta hai.</div></div>
+    </div>
+
+    <div class="code-block fi" style="margin-top:1.2rem">
+      <span class="lb">Key Points</span>
+<pre><span class="cm">// What is Node.js?</span>
+<span class="val">1.</span> Node.js open-source aur cross-platform runtime environment hai.
+<span class="val">2.</span> Ye JavaScript ko browser ke bahar run karta hai.
+<span class="val">3.</span> Ye Google Chrome ke V8 JavaScript Engine par built hai.</pre>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== FEATURES ===== -->
+  <section class="section" id="features">
+    <div class="section-tag">Core Features</div>
+    <h2 class="section-title fi">Node.js Kyun Use Karein? ⚡</h2>
+    <p class="section-desc fi">Node.js fast, scalable aur event-driven approach deta hai. Is liye real-time apps, APIs aur high-traffic servers ke liye useful hai.</p>
+
+    <div class="grid-2">
+      <div class="ccard red">
+        <div class="ci">🚦</div><div class="ct">1. Asynchronous &amp; Non-blocking</div>
+        <div class="cd">Node.js multiple requests ko handle kar sakta hai bina is baat ka wait kiye ke pehla kaam complete ho. Is se performance aur scalability improve hoti hai.</div>
+      </div>
+      <div class="ccard blue">
+        <div class="ci">🍽️</div><div class="ct">Real-life Example: Restaurant Waiter</div>
+        <div class="cd"><strong style="color:var(--text)">Traditional blocking:</strong> waiter aik order leta hai, food serve hone ka wait karta hai, phir next order leta hai.<br><br><strong style="color:var(--text)">Node.js non-blocking:</strong> waiter multiple orders leta hai aur jiska food ready hota hai us ko serve kar deta hai.</div>
+      </div>
+      <div class="ccard green">
+        <div class="ci">🧵</div><div class="ct">2. Single-threaded but Highly Scalable</div>
+        <div class="cd">Node.js single thread use karta hai, lekin event-driven architecture ki wajah se thousands of requests manage kar sakta hai.</div>
+      </div>
+      <div class="ccard yellow">
+        <div class="ci">🚀</div><div class="ct">3. Fast Performance</div>
+        <div class="cd">Node.js V8 engine use karta hai jo JavaScript ko directly machine code mein convert karta hai. Isi wajah se execution fast hoti hai.</div>
+      </div>
+      <div class="ccard accent">
+        <div class="ci">🖥️</div><div class="ct">4. Cross-platform</div>
+        <div class="cd">Node.js Windows, Linux aur macOS par run hota hai. Is ka matlab same technology different systems par use ho sakti hai.</div>
+      </div>
+      <div class="ccard blue">
+        <div class="ci">💬</div><div class="ct">Chat Apps ke liye Suitable</div>
+        <div class="cd">Chat applications mein bohat se users ek sath messages bhejte hain. Node.js non-blocking aur event-driven model ki wajah se aisi apps ke liye useful hota hai.</div>
+      </div>
+    </div>
+
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">👥</span>
+      <div class="alert-body"><strong>Student Activity - After 30 Minutes: Think-Pair-Share (5 minutes)</strong>
+        Students se poochain:
+        <ol>
+          <li>Node.js chat applications ke liye suitable kyun hai?</li>
+          <li>Kya Node.js PHP ya Java ko replace kar sakta hai? Kyun ya kyun nahi?</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-tag">Part 2 - 30 se 60 Minute</div>
+    <h2 class="section-title fi">Node.js Architecture 🗺️</h2>
+    <p class="section-desc fi">Node.js ka architecture event-driven, non-blocking I/O aur client-server model par based hai. Is architecture se server multiple requests efficiently handle karta hai.</p>
+
+    <div class="grid-3">
+      <div class="ccard red"><div class="ci">📡</div><div class="ct">Event-driven</div><div class="cd">Kaam events ki base par hota hai. Jab koi event occur hota hai, Node.js us ko process karta hai.</div></div>
+      <div class="ccard blue"><div class="ci">⚡</div><div class="ct">Non-blocking I/O</div><div class="cd">Input/output operations ke liye wait nahi karna parta. Node.js next request handle karta rehta hai.</div></div>
+      <div class="ccard green"><div class="ci">🌐</div><div class="ct">Client-Server</div><div class="cd">Client request send karta hai, server us request ko process karke response wapas bhejta hai.</div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Architecture Flow</h3>
+    <div class="flow fi">
+      <div class="fbox">1. Client Request</div><span class="farr">→</span>
+      <div class="fbox">2. Event Queue</div><span class="farr">→</span>
+      <div class="fbox">3. Event Loop</div><span class="farr">→</span>
+      <div class="fbox">4. Background Threads</div><span class="farr">→</span>
+      <div class="fbox">5. Response to Client</div>
+    </div>
+
+    <div class="steps" style="margin-top:1.2rem">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">Client request send karta hai</div><div class="sdesc">User browser, mobile app ya API client se request send kar sakta hai.</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">Request Event Queue mein jati hai</div><div class="sdesc">Queue request ko temporarily store karti hai taa ke Event Loop usay process kar sake.</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">Event Loop request process karta hai</div><div class="sdesc">Event Loop decide karta hai ke kaunsi request next handle hogi.</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">Heavy tasks background threads handle karte hain</div><div class="sdesc">File system ya heavy operations ko background mein process kiya ja sakta hai.</div></div></div>
+      <div class="step"><div class="snum">5</div><div><div class="stitle">Response client ko wapas bhej diya jata hai</div><div class="sdesc">Task complete hone ke baad server result client ko send kar deta hai.</div></div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== MODULES ===== -->
+  <section class="section" id="modules">
+    <div class="section-tag">Modules</div>
+    <h2 class="section-title fi">Node.js Modules 📦</h2>
+    <p class="section-desc fi">Modules reusable blocks of code hote hain. Node.js mein har file ko aik module treat kiya jata hai. Modules se code organize aur reuse karna easy ho jata hai.</p>
+
+    <div class="big-quote fi">Real-life example: Modules book ke chapters ki tarah hote hain. Har chapter aik specific topic handle karta hai, isi tarah har module aik specific kaam handle karta hai.</div>
+
+    <div class="grid-3">
+      <div class="ccard red">
+        <div class="ci">🧱</div><div class="ct">1. Core Modules</div>
+        <div class="cd">Ye built-in modules hote hain jo Node.js ke sath already available hote hain. In ko install karne ki zaroorat nahi hoti.</div>
+        <ul>
+          <li><span class="pill">fs</span> - File System</li>
+          <li><span class="pill">http</span> - Web server create karna</li>
+          <li><span class="pill">path</span> - File paths handle karna</li>
+          <li><span class="pill">os</span> - Operating system info</li>
+        </ul>
+      </div>
+      <div class="ccard blue">
+        <div class="ci">📝</div><div class="ct">2. Local Modules</div>
+        <div class="cd">Ye developer khud create karta hai. In ka use code ko organize karne ke liye hota hai.</div>
+        <ul>
+          <li>Project ke different parts separate files mein rakhna</li>
+          <li>Reusable functions banana</li>
+          <li>Code ko clean aur maintainable banana</li>
+        </ul>
+      </div>
+      <div class="ccard green">
+        <div class="ci">📥</div><div class="ct">3. Third-party Modules</div>
+        <div class="cd">Ye external packages hote hain jo NPM se install kiye jate hain.</div>
+        <ul>
+          <li><span class="pill">express</span></li>
+          <li><span class="pill">mongoose</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Core Modules ka Conceptual Use</h3>
+    <div class="table-wrap fi">
+      <table>
+        <thead><tr><th>Module</th><th>Purpose</th><th>Simple Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill">fs</span></td><td>Reading / writing files</td><td>Files ko read aur write karna</td></tr>
+          <tr><td><span class="pill">http</span></td><td>Creating web servers</td><td>Server create karke request/response handle karna</td></tr>
+          <tr><td><span class="pill">path</span></td><td>Path handling</td><td>Files/folders ke paths ko manage karna</td></tr>
+          <tr><td><span class="pill">os</span></td><td>Operating system info</td><td>System ki information lena</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert warn fi" style="margin-top:1.2rem">
+      <span class="alert-icon">🧠</span>
+      <div class="alert-body"><strong>Student Quiz - After 60 Minutes: Class Discussion</strong>
+        <ol>
+          <li>Every Node.js file is treated as a ______.</li>
+          <li>Server create karne ke liye kaunsa module use hota hai?</li>
+          <li>Core modules ko install karna parta hai? Yes / No</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== EVENT LOOP ===== -->
+  <section class="section" id="eventloop">
+    <div class="section-tag">Part 3 - 60 se 90 Minute</div>
+    <h2 class="section-title fi">Event Loop - Node.js ka Heart 🔁</h2>
+    <p class="section-desc fi">Event Loop Node.js ka central concept hai. Ye asynchronous operations ko handle karta hai aur continuously check karta rehta hai ke next kaam kya process karna hai.</p>
+
+    <div class="grid-2">
+      <div class="ccard red"><div class="ci">❤️</div><div class="ct">Heart of Node.js</div><div class="cd">Event Loop ko Node.js ka heart kaha jata hai kyun ke ye async tasks ko manage karta hai.</div></div>
+      <div class="ccard blue"><div class="ci">🔄</div><div class="ct">Continuously Check</div><div class="cd">Event Loop call stack, event queue aur callback queue ko continuously check karta hai.</div></div>
+    </div>
+
+    <div class="flow fi" style="margin-top:1.5rem">
+      <div class="fbox">Call Stack</div><span class="farr">↔</span>
+      <div class="fbox">Event Queue</div><span class="farr">↔</span>
+      <div class="fbox">Callback Queue</div><span class="farr">↔</span>
+      <div class="fbox">Event Loop</div>
+    </div>
+
+    <div class="big-quote fi">Simple Explanation: Event Loop traffic police officer ki tarah hota hai jo decide karta hai ke kaunsi request next jayegi.</div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== CALLBACKS ===== -->
+  <section class="section" id="callbacks">
+    <div class="section-tag">Callbacks</div>
+    <h2 class="section-title fi">Callbacks 📞</h2>
+    <p class="section-desc fi">Callback aik function hota hai jo kisi doosre function ko argument ke tor par pass kiya jata hai. Ye tab execute hota hai jab task complete ho jata hai.</p>
+
+    <div class="grid-2">
+      <div class="ccard green"><div class="ci">🧩</div><div class="ct">Definition</div><div class="cd">Callback = aisa function jo argument ke tor par pass hota hai aur task complete hone ke baad chalaya jata hai.</div></div>
+      <div class="ccard yellow"><div class="ci">🍔</div><div class="ct">Food Order Example</div><div class="cd">Aap food order karte hain aur waiter ko call karte hain. Jab food ready hota hai, waiter aap ko call back karta hai. Isi tarah callback task complete hone ke baad run hota hai.</div></div>
+    </div>
+
+    <div class="code-block fi" style="margin-top:1.2rem">
+      <span class="lb">Concept</span>
+<pre><span class="cm">// Callback ka idea</span>
+Task start hota hai
+Node.js wait nahi karta
+Task complete hota hai
+Callback function run hota hai</pre>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== EVENT EMITTERS ===== -->
+  <section class="section" id="emitters">
+    <div class="section-tag">Event Emitters</div>
+    <h2 class="section-title fi">Event Emitters 📡</h2>
+    <p class="section-desc fi">Event Emitters events ko emit aur listen karne ke liye use hote hain. Ye Observer pattern par based hote hain.</p>
+
+    <div class="grid-2">
+      <div class="ccard red"><div class="ci">📢</div><div class="ct">Emit Events</div><div class="cd">Jab koi kaam complete hota hai ya koi action hota hai, event emit kiya ja sakta hai.</div></div>
+      <div class="ccard blue"><div class="ci">👂</div><div class="ct">Listen Events</div><div class="cd">Listener event ka wait karta hai. Event trigger hota hai to related callback/function run hota hai.</div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Example Use Cases</h3>
+    <div class="grid-3">
+      <div class="ccard green"><div class="ci">📁</div><div class="ct">File Upload Completion</div><div class="cd">File upload complete ho to event trigger ho sakta hai.</div></div>
+      <div class="ccard yellow"><div class="ci">🖱️</div><div class="ct">Button Click</div><div class="cd">Button click aik event hai jo listener ke through handle hota hai.</div></div>
+      <div class="ccard accent"><div class="ci">🌐</div><div class="ct">Network Request</div><div class="cd">Network request complete hone par event ya callback response handle kar sakta hai.</div></div>
+    </div>
+
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">🔗</span>
+      <div class="alert-body"><strong>Relation Between Event Loop, Event Emitters and Callbacks</strong>
+        <ul>
+          <li>Event Loop callbacks ko manage karta hai.</li>
+          <li>Event Emitters events trigger karte hain.</li>
+          <li>Callbacks response handle karte hain.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== ACTIVITIES ===== -->
+  <section class="section" id="activities">
+    <div class="section-tag">Student Involvement</div>
+    <h2 class="section-title fi">Activities aur Class Discussion 👥</h2>
+    <p class="section-desc fi">Lecture mein har important part ke baad students ko involve karna zaroori hai. Neeche PDF wali activities Roman English mein organized form mein di gayi hain.</p>
+
+    <div class="grid-2">
+      <div class="ccard blue fi" style="opacity:1;transform:none">
+        <div class="ci">🕒</div><div class="ct">After 30 Minutes - Think-Pair-Share</div>
+        <div class="cd">
+          <strong style="color:var(--text)">Duration:</strong> 5 minutes<br><br>
+          <strong style="color:var(--text)">Questions:</strong><br>
+          1. Node.js chat applications ke liye suitable kyun hai?<br>
+          2. Kya Node.js PHP ya Java ko replace kar sakta hai? Kyun ya kyun nahi?
+        </div>
+      </div>
+      <div class="ccard red fi" style="opacity:1;transform:none">
+        <div class="ci">🧠</div><div class="ct">After 60 Minutes - MCQs Discussion</div>
+        <div class="cd">
+          1. Every Node.js file is treated as a ______.<br>
+          2. Which module is used to create a server?<br>
+          3. Core modules need installation? Yes / No
+        </div>
+      </div>
+      <div class="ccard green fi" style="opacity:1;transform:none">
+        <div class="ci">📥</div><div class="ct">After 90 Minutes - Scenario Discussion</div>
+        <div class="cd">
+          Students se poochain:<br><br>
+          1. Node.js 1000 users ko file download karte waqt simultaneously kaise handle karta hai?<br>
+          2. Event Loop sab se zyada kahan help karta hai?
+        </div>
+      </div>
+      <div class="ccard yellow fi" style="opacity:1;transform:none">
+        <div class="ci">🎤</div><div class="ct">Wrap-up - Quick Oral Quiz</div>
+        <div class="cd">
+          1. Node.js non-blocking kyun hai?<br>
+          2. Core aur third-party modules mein difference kya hai?<br>
+          3. NPM ka role kya hai?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== NPM ===== -->
+  <section class="section" id="npm">
+    <div class="section-tag">Part 4 - 90 se 120 Minute</div>
+    <h2 class="section-title fi">NPM Repository &amp; Commands 🧰</h2>
+    <p class="section-desc fi">NPM ka full form Node Package Manager hai. Ye Node.js packages install karne aur project dependencies manage karne ke liye use hota hai.</p>
+
+    <div class="grid-3">
+      <div class="ccard red"><div class="ci">📦</div><div class="ct">Node Package Manager</div><div class="cd">NPM packages/libraries install karne ke liye use hota hai.</div></div>
+      <div class="ccard blue"><div class="ci">🌍</div><div class="ct">Largest Software Registry</div><div class="cd">NPM ko duniya ki largest software registry kaha jata hai.</div></div>
+      <div class="ccard green"><div class="ci">🔗</div><div class="ct">Manage Dependencies</div><div class="cd">Project ko chalane ke liye jo libraries chahiye hoti hain un ko manage karta hai.</div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">NPM Repository</h3>
+    <p class="kicker fi">NPM Repository Node.js packages ka online database hai. Is mein bohat se ready-made packages available hote hain.</p>
+    <div class="flow fi">
+      <div class="fbox">express</div><span class="farr">•</span>
+      <div class="fbox">nodemon</div><span class="farr">•</span>
+      <div class="fbox">lodash</div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Common NPM Commands</h3>
+    <div class="table-wrap fi">
+      <table>
+        <thead><tr><th>Command</th><th>Purpose</th><th>Roman English Explanation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill">npm init</span></td><td>Create project</td><td>New Node.js project initialize karta hai.</td></tr>
+          <tr><td><span class="pill">npm install</span></td><td>Install package</td><td>Packages/dependencies install karta hai.</td></tr>
+          <tr><td><span class="pill">npm install package-name</span></td><td>Install specific package</td><td>Specific package install karta hai, example express.</td></tr>
+          <tr><td><span class="pill">npm uninstall</span></td><td>Remove package</td><td>Package ko project se remove karta hai.</td></tr>
+          <tr><td><span class="pill">npm -v</span></td><td>Check npm version</td><td>NPM ka installed version check karta hai.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block fi" style="margin-top:1.2rem">
+      <span class="lb">Terminal</span>
+<pre><span class="cm"># New project create karo</span>
+npm init
+
+<span class="cm"># Packages install karo</span>
+npm install
+npm install package-name
+
+<span class="cm"># Package remove karo</span>
+npm uninstall
+
+<span class="cm"># NPM version check karo</span>
+npm -v</pre>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">package.json</h3>
+    <div class="grid-2">
+      <div class="ccard accent"><div class="ci">📄</div><div class="ct">Project Configuration File</div><div class="cd">package.json project ki configuration file hoti hai.</div></div>
+      <div class="ccard yellow"><div class="ci">🛒</div><div class="ct">Shopping List Example</div><div class="cd">package.json ko project ki shopping list samjho. Is mein required items yani dependencies likhi hoti hain.</div></div>
+    </div>
+
+    <div class="table-wrap fi" style="margin-top:1.2rem">
+      <table>
+        <thead><tr><th>package.json Contains</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Project name</td><td>Project ka naam store hota hai.</td></tr>
+          <tr><td>Dependencies</td><td>Project ko chalane ke liye required packages.</td></tr>
+          <tr><td>Scripts</td><td>Commands jo project run/build/test ke liye use hote hain.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== QUIZ ===== -->
+  <section class="section" id="quiz">
+    <div class="section-tag">Exit Ticket</div>
+    <h2 class="section-title fi">Apna Test Karo! 🧠</h2>
+    <p class="section-desc fi">Lecture ke important concepts par quick quiz. Sahi jawab green aur galat jawab red ho jayega.</p>
+    <div id="quizContainer"></div>
+    <div id="quizScore" style="display:none;margin-top:1rem" class="alert tip">
+      <span class="alert-icon">🎉</span>
+      <div class="alert-body"><strong id="scoreText"></strong></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== SUMMARY ===== -->
+  <section class="section" id="summary">
+    <div class="section-tag">Quick Recap</div>
+    <h2 class="section-title fi">Summary aur References 🔑</h2>
+    <p class="section-desc fi">Lecture ke end par ye key points yaad rakhna zaroori hain.</p>
+
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">Node.js fast, scalable aur event-driven hai</div><div class="sdesc">Is ka non-blocking model multiple requests ko efficiently handle karta hai.</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">Node.js asynchronous processing ke liye Event Loop use karta hai</div><div class="sdesc">Event Loop call stack, event queue aur callback queue ko manage karta hai.</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">Modules code organize karne mein help karte hain</div><div class="sdesc">Core, local aur third-party modules project ko clean aur reusable banate hain.</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">Callbacks task complete hone ke baad run hote hain</div><div class="sdesc">Callbacks asynchronous operations ka response handle karte hain.</div></div></div>
+      <div class="step"><div class="snum">5</div><div><div class="stitle">Event Emitters events trigger aur listen karte hain</div><div class="sdesc">File upload, button click aur network request jese cases mein event emitters useful hain.</div></div></div>
+      <div class="step"><div class="snum">6</div><div><div class="stitle">NPM dependencies efficiently manage karta hai</div><div class="sdesc">NPM packages install, uninstall aur manage karne ka standard tool hai.</div></div></div>
+    </div>
+
+    <div class="alert exam fi" style="margin-top:1.5rem">
+      <span class="alert-icon">🎯</span>
+      <div class="alert-body"><strong>Final Activity - Wrap-up Oral Quiz (10 Minutes)</strong>
+        <ol>
+          <li>Node.js non-blocking kyun hai?</li>
+          <li>Core aur third-party modules mein kya difference hai?</li>
+          <li>NPM ka role kya hai?</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="alert info fi" style="margin-top:1rem">
+      <span class="alert-icon">📚</span>
+      <div class="alert-body"><strong>References</strong>Greg - Node.js Book, Chapters 1, 2, 3, 4<br>No external citations required as concepts are standard Node.js fundamentals.</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Lecture 02 - Web / Server-Side Development</p>
+    <p style="margin-top:.4rem">Banaya gaya Pakistani students ke liye ❤️ - <strong>Node.js Seekhain, Server-Side Strong Banain!</strong></p>
+  </footer>
+
+</main>
+
+<script>
+// === STARS ===
+const sc = document.getElementById('stars');
+for(let i=0;i<100;i++){
+  const s=document.createElement('div'); s.className='star';
+  const sz=Math.random()>0.8?3:2;
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s`;
+  sc.appendChild(s);
+}
+
+// === PROGRESS ===
+window.addEventListener('scroll',()=>{
+  const t=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('pb').style.width=(window.scrollY/t*100)+'%';
+  updateActiveNav();
+});
+
+// === SIDEBAR MOBILE ===
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+function setActive(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(window.innerWidth<=768) closeSidebar();
+}
+
+// Auto-highlight nav based on scroll
+function updateActiveNav(){
+  const sections=['hero','overview','intro','features','architecture','modules','eventloop','callbacks','emitters','activities','npm','quiz','summary'];
+  let current='hero';
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&window.scrollY>=el.offsetTop-120) current=id;
+  });
+  document.querySelectorAll('.nav-item').forEach(a=>{
+    a.classList.remove('active');
+    if(a.getAttribute('href')==='#'+current) a.classList.add('active');
+  });
+}
+
+// === INTERSECTION OBSERVER ===
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i%5*100);
+  });
+},{threshold:0.1});
+document.querySelectorAll('.ccard,.step,.quiz-card,.fi').forEach(el=>obs.observe(el));
+
+// === QUIZ ===
+const qs=[
+  {q:"Node.js ko best describe kaise karein?",opts:["CSS framework","Open-source, cross-platform runtime environment","Database management system","Only browser library"],ans:1},
+  {q:"Node.js JavaScript ko kahan run karne deta hai?",opts:["Sirf browser ke andar","Browser ke bahar","Sirf mobile apps mein","Sirf CSS files mein"],ans:1},
+  {q:"Node.js kis JavaScript engine par built hai?",opts:["SpiderMonkey","Google Chrome V8 Engine","JVM","Laravel Engine"],ans:1},
+  {q:"Every Node.js file is treated as a ______.",opts:["module","database","CSS file","browser tab"],ans:0},
+  {q:"Server create karne ke liye kaunsa core module use hota hai?",opts:["fs","http","os","path"],ans:1},
+  {q:"Core modules ko install karna parta hai?",opts:["Yes","No","Sirf Windows par","Sirf Linux par"],ans:1},
+  {q:"Event Loop ko Node.js ka kya kaha jata hai?",opts:["Heart","Database","Compiler","Style manager"],ans:0},
+  {q:"NPM ka main role kya hai?",opts:["HTML design karna","Packages install aur dependencies manage karna","Operating system install karna","Browser refresh karna"],ans:1}
+];
+let answered=0,score=0;
+const qc=document.getElementById('quizContainer');
+qs.forEach((q,qi)=>{
+  const card=document.createElement('div');
+  card.className='quiz-card';
+  card.innerHTML=`<div class="quiz-q"><span class="qnum">Q${qi+1}.</span>${q.q}</div>
+  <div class="options">${q.opts.map((o,oi)=>`<div class="option" data-qi="${qi}" data-oi="${oi}">${String.fromCharCode(65+oi)}) ${o}</div>`).join('')}</div>
+  <div class="qresult" id="qr${qi}"></div>`;
+  qc.appendChild(card);
+  obs.observe(card);
+});
+document.querySelectorAll('.option').forEach(o=>{
+  o.addEventListener('click',function(){
+    const qi=+this.dataset.qi,oi=+this.dataset.oi;
+    const rd=document.getElementById('qr'+qi);
+    if(rd.dataset.done) return;
+    rd.dataset.done='1'; answered++;
+    if(oi===qs[qi].ans){
+      this.classList.add('correct');
+      rd.textContent='✅ Bilkul sahi! Shabash!'; rd.style.color='#06d6a0'; score++;
+    } else {
+      this.classList.add('wrong');
+      document.querySelectorAll(`[data-qi="${qi}"]`)[qs[qi].ans].classList.add('correct');
+      rd.textContent='❌ Galat - sahi jawab green mein dekho!'; rd.style.color='#ff8b94';
+    }
+    if(answered===qs.length){
+      const sd=document.getElementById('quizScore');
+      const p=score/qs.length*100;
+      sd.style.display='flex';
+      document.getElementById('scoreText').textContent=
+        p===100?'🌟 Perfect 8/8! Ustad ho aap!':
+        p>=80?`🎉 ${score}/8 - Bohat acha! Thori practice aur!`:
+        p>=60?`📚 ${score}/8 - Theek hai, dobara revise karo!`:
+        `💪 ${score}/8 - Himmat mat haro, lecture dobara parho!`;
+      sd.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+});
+</script>
+</body>
+</html>

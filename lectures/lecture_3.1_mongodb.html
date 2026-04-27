@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MongoDB Seekhain — CSC337</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #e63946;
+  --green: #06d6a0;
+  --blue: #118ab2;
+  --yellow: #ffd166;
+  --dark: #0d1117;
+  --darker: #080d13;
+  --card: #161b22;
+  --card2: #1e2530;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --sidebar-w: 270px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--darker);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  position: fixed; top:0; left:0; height:3px;
+  background: linear-gradient(90deg, var(--red), var(--accent), var(--green));
+  z-index: 9999; width:0%; transition: width 0.1s;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  position: fixed; top:0; left:0; bottom:0;
+  z-index: 200;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--green), #04b386);
+  color: #fff; font-size: 0.7rem; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 0.25rem 0.7rem; border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+.sidebar-logo h1 {
+  font-family: 'Baloo Bhaijaan 2', cursive;
+  font-size: 1.3rem; font-weight: 800;
+  background: linear-gradient(135deg, #fff, var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+.sidebar-logo p {
+  font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem;
+}
+
+.nav-section-label {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  padding: 1rem 1.2rem 0.3rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border-radius: 0; border-left: 3px solid transparent;
+  transition: all 0.2s;
+  text-decoration: none; color: var(--muted);
+  font-size: 0.88rem; font-weight: 600;
+}
+.nav-item:hover {
+  background: rgba(6,214,160,0.08);
+  color: var(--text);
+  border-left-color: var(--green);
+}
+.nav-item.active {
+  background: rgba(6,214,160,0.12);
+  color: var(--green);
+  border-left-color: var(--green);
+}
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink:0; }
+.nav-item .dot {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--border); margin-left:auto; flex-shrink:0;
+  transition: background 0.2s;
+}
+.nav-item.active .dot,
+.nav-item:hover .dot { background: var(--green); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--muted);
+  text-align: center;
+}
+
+/* ===== MOBILE TOGGLE ===== */
+.mob-toggle {
+  display: none;
+  position: fixed; top: 1rem; left: 1rem;
+  z-index: 500;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ===== STARS ===== */
+.stars {
+  position: fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.star {
+  position:absolute; border-radius:50%; background:white;
+  animation: twinkle var(--dur) infinite var(--delay) ease-in-out;
+}
+@keyframes twinkle {
+  0%,100%{opacity:.1;transform:scale(1)}
+  50%{opacity:.9;transform:scale(1.5)}
+}
+
+/* ===== HERO ===== */
+.hero {
+  position:relative; z-index:1;
+  min-height: 90vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding: 3rem 2rem;
+  background: radial-gradient(ellipse at 50% 0%, #0a2a1a 0%, transparent 65%);
+}
+.hero h2 {
+  font-family: 'Baloo Bhaijaan 2', cursive;
+  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, var(--green) 50%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1.1; margin-bottom: 1rem;
+  animation: fadeUp 0.9s ease 0.2s both;
+}
+.hero p {
+  color: var(--muted); max-width: 540px; line-height:1.7;
+  animation: fadeUp 0.9s ease 0.4s both;
+  margin-bottom: 2rem;
+}
+.hero-stats {
+  display:flex; gap:1.2rem; flex-wrap:wrap; justify-content:center;
+  animation: fadeUp 0.9s ease 0.6s both;
+}
+.stat {
+  background: var(--card); border:1px solid var(--border);
+  padding: 0.8rem 1.4rem; border-radius:12px; text-align:center;
+}
+.stat-num { font-size:1.8rem; font-weight:800; color:var(--green); font-family:'Baloo Bhaijaan 2',cursive; }
+.stat-label { font-size:0.75rem; color:var(--muted); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* ===== SECTION WRAPPER ===== */
+.section {
+  position:relative; z-index:1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  scroll-margin-top: 1rem;
+}
+.section-tag {
+  display:inline-block;
+  font-size:0.7rem; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--green);
+  background: rgba(6,214,160,0.1);
+  padding: 0.25rem 0.7rem; border-radius:999px;
+  margin-bottom:0.7rem;
+}
+.section-title {
+  font-family:'Baloo Bhaijaan 2',cursive;
+  font-size: clamp(1.6rem,3.5vw,2.4rem);
+  font-weight:800; margin-bottom:0.5rem; line-height:1.2;
+}
+.section-desc { color:var(--muted); max-width:680px; line-height:1.7; margin-bottom:2rem; }
+
+hr.divider {
+  border:none; border-top:1px solid var(--border);
+  max-width:860px; margin:0 auto;
+}
+
+/* ===== GRID ===== */
+.grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+
+/* ===== CONCEPT CARD ===== */
+.ccard {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+  position:relative; overflow:hidden;
+  opacity:0; transform:translateY(24px);
+  transition: all 0.5s ease;
+}
+.ccard::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.ccard.red::before{background:var(--red)}
+.ccard.blue::before{background:var(--blue)}
+.ccard.green::before{background:var(--green)}
+.ccard.yellow::before{background:var(--yellow)}
+.ccard.accent::before{background:var(--accent)}
+.ccard.visible{opacity:1;transform:translateY(0)}
+.ccard:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.35);border-color:var(--green)}
+.ccard .ci{font-size:1.8rem;margin-bottom:.6rem}
+.ccard .ct{font-family:'Baloo Bhaijaan 2',cursive;font-size:1rem;font-weight:800;margin-bottom:.4rem}
+.ccard .cd{color:var(--muted);font-size:.88rem;line-height:1.6}
+
+/* ===== FLOW ===== */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;justify-content:center;margin:1.2rem 0}
+.fbox{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;padding:.55rem 1.1rem;
+  font-size:.88rem;font-weight:700;
+  transition:all .3s;
+}
+.fbox:hover{border-color:var(--green);color:var(--green);transform:scale(1.05)}
+.farr{color:var(--green);font-size:1.1rem}
+
+/* ===== CODE BLOCK ===== */
+.code-block{
+  background:#0d1117;border:1px solid var(--border);
+  border-radius:12px;padding:1.4rem;
+  font-family:'Courier New',monospace;font-size:.88rem;line-height:1.9;
+  overflow-x:auto;position:relative;
+}
+.code-block .lb{position:absolute;top:.7rem;right:.9rem;font-size:.68rem;color:var(--muted);background:var(--card2);padding:.15rem .5rem;border-radius:5px;font-family:'Nunito',sans-serif}
+.kw{color:#ff7b72}.str{color:#a5d6ff}.dec{color:#d2a8ff}.val{color:#79c0ff}.cm{color:#8b949e;font-style:italic}.tag{color:#7ee787}.attr{color:#ffa657}.fn{color:#e3b341}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--card2);padding:.85rem 1.1rem;text-align:left;font-size:.82rem;color:var(--green);font-weight:700;border-bottom:1px solid var(--border)}
+td{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);font-size:.86rem}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(6,214,160,.05)}
+.pill{display:inline-block;background:rgba(6,214,160,.15);color:var(--green);padding:.15rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem}
+
+/* ===== ALERT ===== */
+.alert{border-radius:12px;padding:1.1rem 1.3rem;margin:.8rem 0;border-left:4px solid;display:flex;gap:.7rem;align-items:flex-start}
+.alert-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.alert.warn{background:rgba(255,209,102,.1);border-color:var(--yellow);color:#ffd166}
+.alert.tip{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}
+.alert.exam{background:rgba(230,57,70,.1);border-color:var(--red);color:#ff8b94}
+.alert-body{font-size:.88rem;line-height:1.6}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+
+/* ===== STEPS ===== */
+.steps{display:flex;flex-direction:column;gap:1rem}
+.step{display:flex;gap:1rem;align-items:flex-start;opacity:0;transform:translateX(-15px);transition:all .5s}
+.step.visible{opacity:1;transform:translateX(0)}
+.snum{width:34px;height:34px;flex-shrink:0;background:linear-gradient(135deg,var(--green),#04b386);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem}
+.stitle{font-weight:700;margin-bottom:.2rem}
+.sdesc{color:var(--muted);font-size:.88rem}
+.scode{display:inline-block;background:var(--darker);border:1px solid var(--border);padding:.18rem .55rem;border-radius:6px;font-family:monospace;font-size:.83rem;color:var(--green);margin-top:.35rem}
+
+/* ===== QUIZ ===== */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.3rem;margin-bottom:1rem;opacity:0;transform:translateY(18px);transition:all .5s}
+.quiz-card.visible{opacity:1;transform:translateY(0)}
+.quiz-q{font-family:'Baloo Bhaijaan 2',cursive;font-size:.98rem;font-weight:700;margin-bottom:.9rem}
+.qnum{color:var(--green);margin-right:.4rem}
+.options{display:flex;flex-direction:column;gap:.45rem}
+.option{padding:.6rem 1rem;border-radius:9px;border:1px solid var(--border);cursor:pointer;font-size:.88rem;transition:all .2s;background:var(--card2)}
+.option:hover{border-color:var(--green);background:rgba(6,214,160,.1)}
+.option.correct{background:rgba(6,214,160,.2);border-color:var(--green);color:var(--green)}
+.option.wrong{background:rgba(230,57,70,.15);border-color:var(--red);color:#ff8b94}
+.qresult{margin-top:.5rem;font-size:.83rem;font-weight:600;min-height:1rem}
+
+/* ===== FADE IN ===== */
+.fi{opacity:0;transform:translateY(22px);transition:all .6s ease}
+.fi.visible{opacity:1;transform:translateY(0)}
+
+/* ===== FOOTER ===== */
+footer{position:relative;z-index:1;text-align:center;padding:2.5rem 1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.88rem}
+footer strong{color:var(--green)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mob-toggle{display:flex}
+  .overlay.show{display:block}
+  .main{margin-left:0}
+  .hero h2{font-size:2rem}
+  .section{padding:3rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="pb"></div>
+<div class="stars" id="stars"></div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">CSC337</div>
+    <h1>MongoDB<br>Seekhain 🍃</h1>
+    <p>Advanced Web Technologies</p>
+  </div>
+
+  <div class="nav-section-label">Shuru karo</div>
+  <a class="nav-item active" href="#hero" onclick="setActive(this)">
+    <span class="icon">🏠</span> Home
+    <span class="dot"></span>
+  </a>
+
+  <div class="nav-section-label">Lecture Topics</div>
+  <a class="nav-item" href="#kyun" onclick="setActive(this)">
+    <span class="icon">🤔</span> Kyun MongoDB?
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#architecture" onclick="setActive(this)">
+    <span class="icon">🗺️</span> Architecture
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#basics" onclick="setActive(this)">
+    <span class="icon">🍃</span> MongoDB Basics
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#aggregation" onclick="setActive(this)">
+    <span class="icon">⚙️</span> Aggregation
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#mongoclient" onclick="setActive(this)">
+    <span class="icon">🔌</span> MongoClient
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#mongoose" onclick="setActive(this)">
+    <span class="icon">🦦</span> Mongoose
+    <span class="dot"></span>
+  </a>
+
+  <div class="nav-section-label">Practice</div>
+  <a class="nav-item" href="#debugging" onclick="setActive(this)">
+    <span class="icon">🐛</span> Debugging
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#quiz" onclick="setActive(this)">
+    <span class="icon">🧠</span> Quiz
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#homework" onclick="setActive(this)">
+    <span class="icon">📝</span> Homework
+    <span class="dot"></span>
+  </a>
+  <a class="nav-item" href="#recap" onclick="setActive(this)">
+    <span class="icon">🔑</span> Recap
+    <span class="dot"></span>
+  </a>
+
+  <div class="sidebar-footer">
+    🇵🇰 Pakistani Students ke liye<br>
+    <strong style="color:var(--green)">2 Ghante ka Lecture</strong>
+  </div>
+</aside>
+
+<!-- Mobile toggle -->
+<button class="mob-toggle" id="mobToggle" onclick="openSidebar()">☰</button>
+
+<!-- ========== MAIN ========== -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="section" id="hero" style="min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 0%,#0a2a1a 0%,transparent 65%)">
+    <div style="animation:fadeUp .7s ease .1s both;display:inline-block;background:linear-gradient(135deg,var(--green),#04b386);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:.3rem 1rem;border-radius:999px;margin-bottom:1.2rem">📚 Unit 7–9 — MongoDB + Node.js + Mongoose</div>
+    <h2 style="font-family:'Baloo Bhaijaan 2',cursive;font-size:clamp(2.2rem,6vw,4.2rem);font-weight:800;background:linear-gradient(135deg,#fff 0%,var(--green) 50%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:1rem;animation:fadeUp .9s ease .2s both">MongoDB Seekhain! 🎓</h2>
+    <p style="color:var(--muted);max-width:520px;line-height:1.7;animation:fadeUp .9s ease .4s both;margin-bottom:2rem">MongoDB Basics, Native Driver (MongoClient), aur Mongoose ODM — sab kuch aasaan Roman Urdu mein! Pakistani students ke liye specially tayar ki gayi lecture!</p>
+    <div class="hero-stats" style="animation:fadeUp .9s ease .6s both">
+      <div class="stat"><div class="stat-num">2</div><div class="stat-label">Ghante</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Topics</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">CRUD Ops</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Quiz MCQs</div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== KYUN MONGODB ===== -->
+  <section class="section" id="kyun">
+    <div class="section-tag">Overview — 0 se 5 Minute</div>
+    <h2 class="section-title fi">MongoDB Kyun Seekhein? 🤔</h2>
+    <p class="section-desc fi">Jab data flexible ho aur schema baar baar badle — tab SQL ki jagah MongoDB best choice hai. MEAN/MERN stack ka pehla M yahi hai!</p>
+    <div class="grid-2">
+      <div class="ccard green"><div class="ci">📄</div><div class="ct">JSON-like Documents</div><div class="cd">Data JSON jaisi flexible documents mein store hota hai — SQL tables ki zaroorat nahi. Har document apna structure rakh sakta hai!</div></div>
+      <div class="ccard blue"><div class="ci">🔌</div><div class="ct">Native Driver — Low-Level Control</div><div class="cd">MongoClient se seedha MongoDB se baat karo. Poora control apne haath mein — koi wrapper nahi, koi magic nahi!</div></div>
+      <div class="ccard yellow"><div class="ci">🦦</div><div class="ct">Mongoose — Developer Friendly</div><div class="cd">Schema validation, middleware, population — Mongoose development ko asaan aur safe banata hai!</div></div>
+      <div class="ccard red"><div class="ci">🔧</div><div class="ct">Tools Jo Chahiye</div><div class="cd">MongoDB Shell, Node.js, npm, VS Code. Install karo: npm install mongodb, npm install mongoose</div></div>
+    </div>
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Ek Line Summary</strong>MongoDB = NoSQL, flexible, document-based database jo MEAN/MERN stack ka base hai. Ye yaad karo!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-tag">Big Picture — 5 se 10 Minute</div>
+    <h2 class="section-title fi">MongoDB ka Bada Picture 🗺️</h2>
+    <p class="section-desc fi">MongoDB mein data kaise organize hota hai — Database se Collection tak, Collection se Document tak!</p>
+    <div class="flow fi">
+      <div class="fbox">MongoDB Server</div><span class="farr">→</span>
+      <div class="fbox">Database</div><span class="farr">→</span>
+      <div class="fbox">Collections</div><span class="farr">→</span>
+      <div class="fbox">Documents (BSON)</div>
+    </div>
+    <div class="grid-3" style="margin-top:1.2rem">
+      <div class="ccard green"><div class="ci">🗄️</div><div class="ct">Database</div><div class="cd">use myDatabase likhne se banta hai — koi CREATE DATABASE nahi! show dbs se sab databases dikhte hain.</div></div>
+      <div class="ccard blue"><div class="ci">📦</div><div class="ct">Collection</div><div class="cd">Table ki jagah Collection hoti hai. Pehle insert pe automatically ban jaati hai. Schema optional hai!</div></div>
+      <div class="ccard yellow"><div class="ci">📄</div><div class="ct">Document</div><div class="cd">Row ki jagah Document — BSON format mein. Example: { name: "Ali", age: 20 }</div></div>
+    </div>
+    <div class="alert tip fi" style="margin-top:1.2rem">
+      <span class="alert-icon">✅</span>
+      <div class="alert-body"><strong>Important Baat</strong>MongoDB schema-less hai by default — matlab ek collection mein alag alag structure ke documents ho sakte hain!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== MONGODB BASICS ===== -->
+  <section class="section" id="basics">
+    <div class="section-tag">Topic 7 — 0 se 35 Minute</div>
+    <h2 class="section-title fi">MongoDB Basics aur Collections 🍃</h2>
+    <p class="section-desc fi">MongoDB Shell se seedha kaam karte hain — database banao, documents insert karo, dhundho!</p>
+
+    <h3 class="fi" style="margin:0 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Setup aur Basic Commands</h3>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">MongoDB Shell Kholo</div><div class="sdesc">Terminal mein mongo likho — shell start ho jaegi</div><div class="scode">mongo</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">Bookstore Database Banao</div><div class="sdesc">use command se database select ya create karo</div><div class="scode">use bookstore</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">Documents Insert Karo</div><div class="sdesc">insertOne ya insertMany se data dalo</div><div class="scode">db.books.insertOne({...})</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">Data Dekho</div><div class="sdesc">find() se sab documents dikhao</div><div class="scode">db.books.find().pretty()</div></div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Practice — Documents Insert karna</h3>
+    <div class="code-block fi">
+      <span class="lb">MongoDB Shell</span>
+<pre><span class="cm">// Ek document insert karo</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">insertOne</span>({
+  <span class="attr">title</span>: <span class="str">"Node.js Guide"</span>,
+  <span class="attr">author</span>: <span class="str">"Greg"</span>,
+  <span class="attr">price</span>: <span class="val">20</span>
+})
+
+<span class="cm">// Kai documents ek saath insert karo</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">insertMany</span>([
+  { <span class="attr">title</span>: <span class="str">"MongoDB Basics"</span>, <span class="attr">author</span>: <span class="str">"Lim"</span>, <span class="attr">price</span>: <span class="val">15</span> },
+  { <span class="attr">title</span>: <span class="str">"Express"</span>, <span class="attr">author</span>: <span class="str">"Fernando"</span>, <span class="attr">price</span>: <span class="val">25</span> }
+])
+
+<span class="cm">// Sab books dekho</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">find</span>().<span class="fn">pretty</span>()</pre>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Collection Validation (MongoDB 3.6+)</h3>
+    <p class="section-desc fi" style="margin-bottom:1rem">Schema enforce karna chahte ho? Collection validator use karo!</p>
+    <div class="code-block fi">
+      <span class="lb">MongoDB Shell — Validator</span>
+<pre><span class="val">db</span>.<span class="fn">createCollection</span>(<span class="str">"books"</span>, {
+  <span class="attr">validator</span>: {
+    <span class="attr">$jsonSchema</span>: {
+      <span class="attr">bsonType</span>: <span class="str">"object"</span>,
+      <span class="attr">required</span>: [<span class="str">"title"</span>, <span class="str">"price"</span>],
+      <span class="attr">properties</span>: {
+        <span class="attr">title</span>: { <span class="attr">bsonType</span>: <span class="str">"string"</span> },
+        <span class="attr">price</span>: { <span class="attr">bsonType</span>: <span class="str">"number"</span> }
+      }
+    }
+  }
+})</pre>
+    </div>
+
+    <div class="alert warn fi" style="margin-top:1rem">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>Common Galtiyan!</strong>Agar collection validator set hai to required fields zaroor deni hain — warna insert fail ho jaega! title aur price missing hue to error aega.</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== AGGREGATION ===== -->
+  <section class="section" id="aggregation">
+    <div class="section-tag">Topic 7 — Aggregation Pipeline</div>
+    <h2 class="section-title fi">Aggregation Pipeline ⚙️</h2>
+    <p class="section-desc fi">Aggregation se data process karo — average nikalo, group karo, filter karo. SQL ke GROUP BY jaisa lekin zyada powerful!</p>
+
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="ccard green fi" style="opacity:1;transform:none"><div class="ci">🔍</div><div class="ct">$match</div><div class="cd">Filter karo — sirf wahi documents jo condition match karein. SQL ka WHERE clause!</div></div>
+      <div class="ccard blue fi" style="opacity:1;transform:none"><div class="ci">📊</div><div class="ct">$group</div><div class="cd">Data group karo — author ke hisaab se, category ke hisaab se. $sum, $avg use karo!</div></div>
+      <div class="ccard yellow fi" style="opacity:1;transform:none"><div class="ci">🔢</div><div class="ct">$sort / $project</div><div class="cd">Sort karo aur sirf chahiye wali fields rakho. $project se unnecessary fields hatao!</div></div>
+    </div>
+
+    <div class="code-block fi">
+      <span class="lb">Aggregation Examples</span>
+<pre><span class="cm">// Average price nikalo</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">aggregate</span>([
+  { <span class="attr">$group</span>: { <span class="attr">_id</span>: <span class="kw">null</span>, <span class="attr">avgPrice</span>: { <span class="attr">$avg</span>: <span class="str">"$price"</span> } } }
+])
+
+<span class="cm">// Author ke hisaab se group karo</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">aggregate</span>([
+  {
+    <span class="attr">$group</span>: {
+      <span class="attr">_id</span>: <span class="str">"$author"</span>,
+      <span class="attr">totalBooks</span>: { <span class="attr">$sum</span>: <span class="val">1</span> },
+      <span class="attr">avgPrice</span>: { <span class="attr">$avg</span>: <span class="str">"$price"</span> }
+    }
+  }
+])
+
+<span class="cm">// Pehle filter, phir count</span>
+<span class="val">db</span>.<span class="fn">books</span>.<span class="fn">aggregate</span>([
+  { <span class="attr">$match</span>: { <span class="attr">price</span>: { <span class="attr">$gt</span>: <span class="val">20</span> } } },
+  { <span class="attr">$group</span>: { <span class="attr">_id</span>: <span class="kw">null</span>, <span class="attr">count</span>: { <span class="attr">$sum</span>: <span class="val">1</span> } } }
+])</pre>
+    </div>
+
+    <div class="alert exam fi" style="margin-top:1rem">
+      <span class="alert-icon">📌</span>
+      <div class="alert-body"><strong>Exam ke liye Yaad Rakho!</strong>Aggregation pipeline stages hain: $match (filter), $group (group karo), $sort (sort karo), $project (fields chuno). Ye sequence yaad rakhna!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== MONGOCLIENT ===== -->
+  <section class="section" id="mongoclient">
+    <div class="section-tag">Topic 8 — 35 se 70 Minute</div>
+    <h2 class="section-title fi">MongoDB Client — Node.js se Connect karo 🔌</h2>
+    <p class="section-desc fi">Ab MongoDB ko Node.js se use karte hain! Official npm driver — MongoClient — se seedha database se baat karo.</p>
+
+    <h3 class="fi" style="margin:0 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Setup karo</h3>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">Naya Folder Banao</div><div class="sdesc">Terminal mein project folder banao</div><div class="scode">mkdir mongo-node-demo && cd mongo-node-demo</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">npm Init karo</div><div class="sdesc">Package.json banao</div><div class="scode">npm init -y</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">MongoDB Package Install karo</div><div class="sdesc">Official driver install karo</div><div class="scode">npm install mongodb</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">index.js banao aur code likho</div><div class="sdesc">VS Code mein file kholo aur neeche wala code copy karo</div><div class="scode">code index.js</div></div></div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Basic Connection</h3>
+    <div class="code-block fi">
+      <span class="lb">index.js — Connection</span>
+<pre><span class="kw">const</span> { <span class="val">MongoClient</span> } = <span class="fn">require</span>(<span class="str">'mongodb'</span>);
+<span class="kw">const</span> <span class="attr">uri</span> = <span class="str">'mongodb://localhost:27017/bookstore'</span>;
+
+<span class="kw">async function</span> <span class="fn">main</span>() {
+  <span class="kw">const</span> <span class="attr">client</span> = <span class="kw">new</span> <span class="val">MongoClient</span>(<span class="attr">uri</span>);
+  <span class="kw">try</span> {
+    <span class="kw">await</span> <span class="attr">client</span>.<span class="fn">connect</span>();
+    <span class="val">console</span>.<span class="fn">log</span>(<span class="str">'Connected to MongoDB!'</span>);
+    <span class="kw">const</span> <span class="attr">db</span> = <span class="attr">client</span>.<span class="fn">db</span>(<span class="str">'bookstore'</span>);
+    <span class="cm">// yahan operations karo...</span>
+  } <span class="kw">catch</span> (<span class="attr">e</span>) {
+    <span class="val">console</span>.<span class="fn">error</span>(<span class="attr">e</span>);
+  } <span class="kw">finally</span> {
+    <span class="kw">await</span> <span class="attr">client</span>.<span class="fn">close</span>();
+  }
+}
+<span class="fn">main</span>();</pre>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">CRUD Operations — Insert, Find, Update, Delete</h3>
+    <div class="code-block fi">
+      <span class="lb">index.js — CRUD</span>
+<pre><span class="cm">// Collection pakdo</span>
+<span class="kw">const</span> <span class="attr">collection</span> = <span class="attr">db</span>.<span class="fn">collection</span>(<span class="str">'books'</span>);
+
+<span class="cm">// Insert karo</span>
+<span class="kw">await</span> <span class="attr">collection</span>.<span class="fn">insertOne</span>({
+  <span class="attr">title</span>: <span class="str">"Node.js"</span>,
+  <span class="attr">author</span>: <span class="str">"Greg"</span>,
+  <span class="attr">price</span>: <span class="val">20</span>
+});
+
+<span class="cm">// Filter se dhundho — price 15 se zyada</span>
+<span class="kw">const</span> <span class="attr">books</span> = <span class="kw">await</span> <span class="attr">collection</span>
+  .<span class="fn">find</span>({ <span class="attr">price</span>: { <span class="attr">$gt</span>: <span class="val">15</span> } })
+  .<span class="fn">toArray</span>();
+<span class="val">console</span>.<span class="fn">log</span>(<span class="attr">books</span>);
+
+<span class="cm">// Update karo</span>
+<span class="kw">await</span> <span class="attr">collection</span>.<span class="fn">updateOne</span>(
+  { <span class="attr">title</span>: <span class="str">"Node.js"</span> },
+  { <span class="attr">$set</span>: { <span class="attr">price</span>: <span class="val">25</span> } }
+);
+
+<span class="cm">// Delete karo</span>
+<span class="kw">await</span> <span class="attr">collection</span>.<span class="fn">deleteOne</span>({ <span class="attr">title</span>: <span class="str">"Node.js"</span> });</pre>
+    </div>
+
+    <div class="table-wrap fi" style="margin-top:1.2rem">
+      <table>
+        <thead><tr><th>Method</th><th>Kaam</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill">insertOne()</span></td><td>Ek document add karo</td><td>insertOne({title:"X"})</td></tr>
+          <tr><td><span class="pill">find()</span></td><td>Documents dhundho</td><td>find({price:{$gt:10}})</td></tr>
+          <tr><td><span class="pill">updateOne()</span></td><td>Ek document update karo</td><td>updateOne({}, {$set:{}})</td></tr>
+          <tr><td><span class="pill">deleteOne()</span></td><td>Ek document hatao</td><td>deleteOne({title:"X"})</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert warn fi" style="margin-top:1rem">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>Yaad Rakhna!</strong>MongoClient powerful hai lekin verbose — har operation mein connect/close karna parta hai. Mongoose ye sab simplify kar deta hai!</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== MONGOOSE ===== -->
+  <section class="section" id="mongoose">
+    <div class="section-tag">Topic 9 — 70 se 105 Minute</div>
+    <h2 class="section-title fi">Mongoose — Schema aur Models 🦦</h2>
+    <p class="section-desc fi">Mongoose = ODM (Object Document Mapper). Schema define karo, Model banao, aur CRUD operations easily karo — validation bhi free mein!</p>
+
+    <div class="grid-2">
+      <div class="ccard green fi" style="opacity:1;transform:none">
+        <div class="ci">📋</div>
+        <div class="ct">Schema kya hai?</div>
+        <div class="cd">Document ka structure define karta hai — kaunsi fields hongi, unka type kya hoga, kya required hai. MongoClient mein ye nahi hota!</div>
+      </div>
+      <div class="ccard blue fi" style="opacity:1;transform:none">
+        <div class="ci">🏗️</div>
+        <div class="ct">Model kya hai?</div>
+        <div class="cd">Schema se banta hai — ek class jo CRUD ke liye use hoti hai. Book.find(), Book.save() — sab Model se!</div>
+      </div>
+      <div class="ccard yellow fi" style="opacity:1;transform:none">
+        <div class="ci">✅</div>
+        <div class="ct">Validation</div>
+        <div class="cd">required: true, min: 0 — Schema mein rules set karo. Galat data save hi nahi hoga!</div>
+      </div>
+      <div class="ccard red fi" style="opacity:1;transform:none">
+        <div class="ci">🔗</div>
+        <div class="ct">Extra Features</div>
+        <div class="cd">Middleware (hooks), Population (joins), Easier queries — MongoClient se kaafi zyada features!</div>
+      </div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">Setup aur Schema Banana</h3>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">Naya Folder + npm Init</div><div class="sdesc">Alag folder banao Mongoose ke liye</div><div class="scode">mkdir mongoose-demo && cd mongoose-demo && npm init -y</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">Mongoose Install karo</div><div class="sdesc">npm se install karo</div><div class="scode">npm install mongoose</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">app.js banao</div><div class="sdesc">Main file mein connect karo aur Schema/Model define karo</div><div class="scode">code app.js</div></div></div>
+    </div>
+
+    <div class="code-block fi" style="margin-top:1.2rem">
+      <span class="lb">app.js — Schema aur Model</span>
+<pre><span class="kw">const</span> <span class="attr">mongoose</span> = <span class="fn">require</span>(<span class="str">'mongoose'</span>);
+
+<span class="cm">// Database se connect karo</span>
+<span class="attr">mongoose</span>.<span class="fn">connect</span>(<span class="str">'mongodb://localhost:27017/bookstore'</span>)
+  .<span class="fn">then</span>(() => <span class="val">console</span>.<span class="fn">log</span>(<span class="str">'Connected!'</span>));
+
+<span class="cm">// Schema define karo — structure aur validation</span>
+<span class="kw">const</span> <span class="attr">bookSchema</span> = <span class="kw">new</span> <span class="attr">mongoose</span>.<span class="fn">Schema</span>({
+  <span class="attr">title</span>:  { <span class="attr">type</span>: <span class="val">String</span>, <span class="attr">required</span>: <span class="kw">true</span> },
+  <span class="attr">author</span>: <span class="val">String</span>,
+  <span class="attr">price</span>:  { <span class="attr">type</span>: <span class="val">Number</span>, <span class="attr">min</span>: <span class="val">0</span> }
+});
+
+<span class="cm">// Model banao Schema se</span>
+<span class="kw">const</span> <span class="val">Book</span> = <span class="attr">mongoose</span>.<span class="fn">model</span>(<span class="str">'Book'</span>, <span class="attr">bookSchema</span>);</pre>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">CRUD Operations — Mongoose Style</h3>
+    <div class="code-block fi">
+      <span class="lb">app.js — CRUD</span>
+<pre><span class="kw">async function</span> <span class="fn">crud</span>() {
+
+  <span class="cm">// CREATE — naya book banao aur save karo</span>
+  <span class="kw">const</span> <span class="attr">book</span> = <span class="kw">new</span> <span class="val">Book</span>({
+    <span class="attr">title</span>: <span class="str">"Mongoose Guide"</span>,
+    <span class="attr">author</span>: <span class="str">"Lim"</span>,
+    <span class="attr">price</span>: <span class="val">15</span>
+  });
+  <span class="kw">await</span> <span class="attr">book</span>.<span class="fn">save</span>();
+
+  <span class="cm">// READ — filter se dhundho</span>
+  <span class="kw">const</span> <span class="attr">books</span> = <span class="kw">await</span> <span class="val">Book</span>.<span class="fn">find</span>({ <span class="attr">price</span>: { <span class="attr">$gt</span>: <span class="val">10</span> } });
+  <span class="val">console</span>.<span class="fn">log</span>(<span class="attr">books</span>);
+
+  <span class="cm">// UPDATE — title dhundho aur price badlo</span>
+  <span class="kw">await</span> <span class="val">Book</span>.<span class="fn">updateOne</span>(
+    { <span class="attr">title</span>: <span class="str">"Mongoose Guide"</span> },
+    { <span class="attr">$set</span>: { <span class="attr">price</span>: <span class="val">20</span> } }
+  );
+
+  <span class="cm">// DELETE — document hatao</span>
+  <span class="kw">await</span> <span class="val">Book</span>.<span class="fn">deleteOne</span>({ <span class="attr">title</span>: <span class="str">"Mongoose Guide"</span> });
+}
+<span class="fn">crud</span>();</pre>
+    </div>
+
+    <div class="alert tip fi" style="margin-top:1rem">
+      <span class="alert-icon">🧪</span>
+      <div class="alert-body"><strong>Validation Test karo!</strong>price: -5 dene ki koshish karo — Mongoose reject kar dega kyunki min: 0 set hai. Ye MongoClient mein nahi hota!</div>
+    </div>
+
+    <h3 class="fi" style="margin:1.8rem 0 .8rem;font-family:'Baloo Bhaijaan 2',cursive">MongoClient vs Mongoose — Farq kya hai?</h3>
+    <div class="table-wrap fi">
+      <table>
+        <thead><tr><th>Feature</th><th>MongoClient</th><th>Mongoose</th></tr></thead>
+        <tbody>
+          <tr><td>Schema</td><td>Nahi hota</td><td>✅ Schema define hota hai</td></tr>
+          <tr><td>Validation</td><td>Manual karna parta hai</td><td>✅ Built-in validation</td></tr>
+          <tr><td>Middleware / Hooks</td><td>❌ Nahi</td><td>✅ pre/post hooks</td></tr>
+          <tr><td>Population (joins)</td><td>❌ Nahi</td><td>✅ .populate() available</td></tr>
+          <tr><td>Control Level</td><td>Low-level, zyada control</td><td>High-level, easy API</td></tr>
+          <tr><td>Use Case</td><td>Simple scripts, microservices</td><td>Full apps, REST APIs</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== DEBUGGING ===== -->
+  <section class="section" id="debugging">
+    <div class="section-tag">Debugging Clinic</div>
+    <h2 class="section-title fi">Debugging Clinic 🐛</h2>
+    <p class="section-desc fi">Sabse common errors aur unka hal — ye yaad rakho to kabhi phase nahi khao ge!</p>
+    <div class="grid-2">
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>Error: "Connection refused"</strong>Matlab: MongoDB server chal nahi raha. Terminal mein mongod command se server start karo pehle!</div>
+      </div>
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>Validation Error — price fail</strong>Matlab: Schema mein min: 0 hai aur aap negative value de rahe ho. Schema rules check karo!</div>
+      </div>
+      <div class="alert warn fi" style="margin:0">
+        <span class="alert-icon">🔴</span>
+        <div class="alert-body"><strong>Cannot find module 'mongodb'</strong>Matlab: npm install nahi kiya. npm install mongodb ya npm install mongoose run karo!</div>
+      </div>
+      <div class="alert tip fi" style="margin:0">
+        <span class="alert-icon">💡</span>
+        <div class="alert-body"><strong>Pro Tip</strong>console.error() aur try/catch hamesha use karo. Mongoose ki validation errors mein detail hoti hai — unhe parhna seekho!</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== QUIZ ===== -->
+  <section class="section" id="quiz">
+    <div class="section-tag">Exit Ticket</div>
+    <h2 class="section-title fi">Apna Test Karo! 🧠</h2>
+    <p class="section-desc fi">Pach sawaal — sahi jawab green, galat red ho jaega. End mein score bhi milega!</p>
+    <div id="quizContainer"></div>
+    <div id="quizScore" style="display:none;margin-top:1rem" class="alert tip">
+      <span class="alert-icon">🎉</span>
+      <div class="alert-body"><strong id="scoreText"></strong></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== HOMEWORK ===== -->
+  <section class="section" id="homework">
+    <div class="section-tag">Ghar ka Kaam</div>
+    <h2 class="section-title fi">Homework aur Lab Task 📝</h2>
+    <p class="section-desc fi">Practice se hi mastery aati hai — ye do tasks karo!</p>
+    <div class="grid-2">
+      <div class="ccard red fi" style="opacity:1;transform:none">
+        <div class="ci">🏠</div>
+        <div class="ct">Homework: Users CRUD App</div>
+        <div class="cd">
+          <strong style="color:var(--text)">Node.js + Mongoose se Users collection manage karo</strong><br><br>
+          ✅ User Schema banao (name, email, age)<br>
+          ✅ insertOne, find, updateOne, deleteOne likho<br>
+          ✅ Validation add karo (email required, age min 0)<br>
+          ✅ Test karo — galat data dene pe error aaye<br><br>
+          <span style="color:var(--muted)">Submission: GitHub link ya zip + screenshots</span>
+        </div>
+      </div>
+      <div class="ccard green fi" style="opacity:1;transform:none">
+        <div class="ci">💻</div>
+        <div class="ct">Lab Task: Bookstore App</div>
+        <div class="cd">
+          1️⃣ <code style="color:var(--green)">mkdir bookstore-app</code><br>
+          2️⃣ <code style="color:var(--green)">npm install mongoose</code><br>
+          3️⃣ Book Schema banao (title, author, price)<br>
+          4️⃣ Aggregation: average price nikalo<br>
+          5️⃣ Author ke hisaab se group karo<br><br>
+          <strong style="color:var(--yellow)">🌟 Bonus:</strong> Collection validator bhi add karo!
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===== RECAP ===== -->
+  <section class="section" id="recap">
+    <div class="section-tag">Quick Recap</div>
+    <h2 class="section-title fi">5 Key Yaad Rakhne Wali Baatein 🔑</h2>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div><div class="stitle">MongoDB NoSQL document database hai</div><div class="sdesc">Database → Collections → Documents (BSON). Schema-less by default!</div></div></div>
+      <div class="step"><div class="snum">2</div><div><div class="stitle">use command se database ban jaata hai</div><div class="sdesc">CREATE DATABASE nahi hota — use myDatabase likho aur kaam shuru!</div></div></div>
+      <div class="step"><div class="snum">3</div><div><div class="stitle">MongoClient low-level native driver hai</div><div class="sdesc">connect(), find(), insertOne(), updateOne(), deleteOne() — ye methods yaad rakhna</div></div></div>
+      <div class="step"><div class="snum">4</div><div><div class="stitle">Mongoose ODM hai — Schema + Validation deta hai</div><div class="sdesc">Schema define karo, Model banao, CRUD karo — validation automatically hoti hai!</div></div></div>
+      <div class="step"><div class="snum">5</div><div><div class="stitle">Aggregation se data process hota hai</div><div class="sdesc">$match, $group, $sort, $project — pipeline stages yaad karo!</div></div></div>
+    </div>
+
+    <div class="alert exam fi" style="margin-top:1.5rem">
+      <span class="alert-icon">🎯</span>
+      <div class="alert-body"><strong>Exam ke liye Jawab!</strong>"MongoDB aur Mongoose mein farq?" → MongoDB native driver direct control deta hai, Mongoose schema/validation/middleware add karta hai. Ye jawab likho!</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>CSC337 — Advanced Web Technologies 🇵🇰</p>
+    <p style="margin-top:.4rem">Banaya gaya Pakistani students ke liye ❤️ — <strong>MongoDB Seekhain, Pakistan Banain!</strong></p>
+  </footer>
+
+</main>
+
+<script>
+// === STARS ===
+const sc = document.getElementById('stars');
+for(let i=0;i<100;i++){
+  const s=document.createElement('div'); s.className='star';
+  const sz=Math.random()>0.8?3:2;
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s`;
+  sc.appendChild(s);
+}
+
+// === PROGRESS ===
+window.addEventListener('scroll',()=>{
+  const t=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('pb').style.width=(window.scrollY/t*100)+'%';
+  updateActiveNav();
+});
+
+// === SIDEBAR MOBILE ===
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+function setActive(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(window.innerWidth<=768) closeSidebar();
+}
+
+function updateActiveNav(){
+  const sections=['hero','kyun','architecture','basics','aggregation','mongoclient','mongoose','debugging','quiz','homework','recap'];
+  let current='hero';
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&window.scrollY>=el.offsetTop-120) current=id;
+  });
+  document.querySelectorAll('.nav-item').forEach(a=>{
+    a.classList.remove('active');
+    if(a.getAttribute('href')==='#'+current) a.classList.add('active');
+  });
+}
+
+// === INTERSECTION OBSERVER ===
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i%5*100);
+  });
+},{threshold:0.1});
+document.querySelectorAll('.ccard,.step,.quiz-card,.fi').forEach(el=>obs.observe(el));
+
+// === QUIZ ===
+const qs=[
+  {q:"MongoDB mein data kis format mein store hota hai?",opts:["XML","SQL Tables","BSON Documents","CSV Files"],ans:2},
+  {q:"MongoDB mein database banane ka sahi tarika kaunsa hai?",opts:["CREATE DATABASE mydb","use mydb","NEW DATABASE mydb","db.create('mydb')"],ans:1},
+  {q:"Mongoose kya hai?",opts:["Ek web server","ODM — Object Document Mapper","Ek CSS framework","MongoDB ka dusra naam"],ans:1},
+  {q:"Aggregation mein filter karne ke liye kaunsa stage use hota hai?",opts:["$group","$sort","$match","$project"],ans:2},
+  {q:"MongoClient mein ek document insert karne ka method?",opts:["addOne()","insertOne()","saveOne()","pushOne()"],ans:1}
+];
+let answered=0,score=0;
+const qc=document.getElementById('quizContainer');
+qs.forEach((q,qi)=>{
+  const card=document.createElement('div');
+  card.className='quiz-card';
+  card.innerHTML=`<div class="quiz-q"><span class="qnum">Q${qi+1}.</span>${q.q}</div>
+  <div class="options">${q.opts.map((o,oi)=>`<div class="option" data-qi="${qi}" data-oi="${oi}">${String.fromCharCode(65+oi)}) ${o}</div>`).join('')}</div>
+  <div class="qresult" id="qr${qi}"></div>`;
+  qc.appendChild(card);
+  obs.observe(card);
+});
+document.querySelectorAll('.option').forEach(o=>{
+  o.addEventListener('click',function(){
+    const qi=+this.dataset.qi,oi=+this.dataset.oi;
+    const rd=document.getElementById('qr'+qi);
+    if(rd.dataset.done) return;
+    rd.dataset.done='1'; answered++;
+    if(oi===qs[qi].ans){
+      this.classList.add('correct');
+      rd.textContent='✅ Bilkul sahi! Shabash!'; rd.style.color='#06d6a0'; score++;
+    } else {
+      this.classList.add('wrong');
+      document.querySelectorAll(`[data-qi="${qi}"]`)[qs[qi].ans].classList.add('correct');
+      rd.textContent='❌ Galat — sahi jawab green mein dekho!'; rd.style.color='#ff8b94';
+    }
+    if(answered===qs.length){
+      const sd=document.getElementById('quizScore');
+      const p=score/qs.length*100;
+      sd.style.display='flex';
+      document.getElementById('scoreText').textContent=
+        p===100?'🌟 Perfect 5/5! Ustad ho aap!':
+        p>=80?`🎉 ${score}/5 — Bohat acha! Thori practice aur!`:
+        p>=60?`📚 ${score}/5 — Theek hai, dobara parho!`:
+        `💪 ${score}/5 — Himmat mat haro, koshish karo!`;
+      sd.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+});
+</script>
+</body>
+</html>

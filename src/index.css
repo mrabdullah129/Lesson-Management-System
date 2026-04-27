@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0f172a;
+  background-color: #f4f7f9;
+  font-family: Inter, Roboto, system-ui, sans-serif;
+}
+
+.dark {
+  color: #e2e8f0;
+  background-color: #020617;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 10% -5%, #d9fbe8 0%, rgba(217, 251, 232, 0) 35%),
+    radial-gradient(circle at 95% 10%, #dbeafe 0%, rgba(219, 234, 254, 0) 40%),
+    linear-gradient(180deg, #f8fafc 0%, #f3f6f8 55%, #f8fafc 100%);
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 8% -4%, rgba(20, 83, 45, 0.35) 0%, rgba(20, 83, 45, 0) 34%),
+    radial-gradient(circle at 92% 8%, rgba(30, 58, 138, 0.35) 0%, rgba(30, 58, 138, 0) 40%),
+    linear-gradient(180deg, #020617 0%, #0b1220 55%, #020617 100%);
+}
+
+.bg-app-surface {
+  position: relative;
+}
+
+.bg-app-surface::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
+
+.dark .bg-app-surface::before {
+  background-image: linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+}
