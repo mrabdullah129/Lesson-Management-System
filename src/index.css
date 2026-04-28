@@ -26,6 +26,7 @@ body {
     radial-gradient(circle at 10% -5%, #d9fbe8 0%, rgba(217, 251, 232, 0) 35%),
     radial-gradient(circle at 95% 10%, #dbeafe 0%, rgba(219, 234, 254, 0) 40%),
     linear-gradient(180deg, #f8fafc 0%, #f3f6f8 55%, #f8fafc 100%);
+  overflow-x: hidden;
 }
 
 .dark body {

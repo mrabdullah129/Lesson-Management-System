@@ -61,10 +61,10 @@ function LecturePage({ lectures }) {
   }
 
   return (
-    <article className="mx-auto flex w-full max-w-6xl flex-col px-4 py-6 md:px-8 lg:px-10">
-      <header className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <article className="mx-auto flex w-full max-w-6xl flex-col px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:px-10">
+      <header className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-5">
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Lecture Content</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 md:text-3xl">{currentLecture.title}</h1>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl md:text-3xl">{currentLecture.title}</h1>
       </header>
 
       {error && !isLoading && (
@@ -82,13 +82,13 @@ function LecturePage({ lectures }) {
             key={currentLecture.slug}
             src={filePath}
             title={currentLecture.title}
-            className="h-[74vh] w-full min-h-[560px] bg-white"
+            className="h-[68vh] min-h-[420px] w-full bg-white md:h-[74vh] md:min-h-[560px]"
             onLoad={() => setIsLoading(false)}
           />
         </section>
       )}
 
-      <footer className="mt-7 grid gap-3 border-t border-slate-200 pt-5 dark:border-slate-700 sm:grid-cols-2">
+      <footer className="mt-6 grid gap-3 border-t border-slate-200 pt-5 dark:border-slate-700 sm:grid-cols-2">
         {previousLecture ? (
           <Link
             to={`/lecture/${previousLecture.slug}`}
@@ -97,7 +97,7 @@ function LecturePage({ lectures }) {
             <ChevronLeft size={16} /> Previous
           </Link>
         ) : (
-          <div />
+          <div className="hidden sm:block" />
         )}
 
         {nextLecture ? (

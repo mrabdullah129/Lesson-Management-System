@@ -1,16 +1,16 @@
 export const lectures = [
   {
-    title: 'Lecture 2 NodeJS',
+    title: 'Lecture 2 NodeJS (Roman Urdu)',
     slug: 'lecture-02-nodejs',
     fileName: 'Lecture_02_NodeJS.html'
   },
   {
-    title: 'Lecture 3 HTTP URL FS',
+    title: 'Lecture 3 HTTP URL FS (Roman Urdu)',
     slug: 'lecture-3-http-url-fs',
     fileName: 'lecture_3_http_url_fs.html'
   },
   {
-    title: 'Lecture 3.1 MongoDB',
+    title: 'Lecture 3.1 MongoDB (Roman Urdu)',
     slug: 'lecture-3-1-mongodb',
     fileName: 'lecture_3.1_mongodb.html'
   },
@@ -50,17 +50,17 @@ export const lectures = [
     fileName: 'lecture 9 roman urdu.html'
   },
   {
-    title: 'Lecture 10',
+    title: 'Lecture 10 (Roman Urdu)',
     slug: 'lecture-10',
     fileName: 'lecture 10.html'
   },
   {
-    title: 'Lecture 11 Angular Core Mastery',
+    title: 'Lecture 11 Angular Core Mastery (Roman Urdu)',
     slug: 'lecture-11-angular-core-mastery',
     fileName: 'lecture11-angular-core-mastery.html'
   },
   {
-    title: 'Lecture 12',
+    title: 'Lecture 12 (Roman Urdu)',
     slug: 'lecture-12',
     fileName: 'Lecture to Web-saved 12.html'
   },
